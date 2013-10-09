@@ -31,7 +31,7 @@ public class WiFiBox {
 	 * The sleep time between both messages for switching lights to the white
 	 * mode.
 	 */
-	public static final int SLEEP_BEFORE_WHITE = 100;
+	public static final int DEFAULT_SLEEP_BETWEEN_MESSAGES = 100;
 
 	/**
 	 * The command code for "RGBW COLOR LED ALL OFF".
@@ -327,6 +327,40 @@ public class WiFiBox {
 	}
 
 	/**
+	 * Triggers the disco mode for a particular group of lights. The lights will
+	 * be switched on before to activate them.Note that the messages are sent in
+	 * a new thread. Therefore, you should not send other commands directly
+	 * after executing this one. Also, there are no exceptions when sending
+	 * messages fails since they occur in another thread.
+	 * 
+	 * @param group
+	 *            the group to switch of (between 1 and 4)
+	 * @throws IllegalArgumentException
+	 *             if the group number is not between 1 and 4
+	 */
+	public void discoMode(int group) throws IllegalArgumentException {
+		int[] messages = { 0, COMMAND_DISCO };
+		switch (group) {
+		case 1:
+			messages[0] = COMMAND_GROUP_1_ON;
+			break;
+		case 2:
+			messages[0] = COMMAND_GROUP_2_ON;
+			break;
+		case 3:
+			messages[0] = COMMAND_GROUP_3_ON;
+			break;
+		case 4:
+			messages[0] = COMMAND_GROUP_4_ON;
+			break;
+		default:
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+	}
+
+	/**
 	 * Increase the disco mode's speed for the active group of lights (the last
 	 * one that was switched on).
 	 * 
@@ -356,7 +390,7 @@ public class WiFiBox {
 	 */
 	public void allWhite() {
 		int[] messages = { COMMAND_ALL_ON, COMMAND_ALL_WHITE };
-		sendMultipleMessages(messages, SLEEP_BEFORE_WHITE);
+		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
 	}
 
 	/**
@@ -393,7 +427,7 @@ public class WiFiBox {
 			throw new IllegalArgumentException(
 					"The group number must be between 1 and 4");
 		}
-		sendMultipleMessages(messages, SLEEP_BEFORE_WHITE);
+		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
 	}
 
 }
