@@ -8,7 +8,7 @@ import java.net.UnknownHostException;
 
 /**
  * This class represents a MiLight WiFi box and is able to send commands to a
- * specific box.
+ * particular box.
  * 
  * @author Stefan Toman (toman@tum.de)
  */
@@ -26,6 +26,71 @@ public class WiFiBox {
 	 * The default port for unconfigured boxes.
 	 */
 	public static final int DEFAULT_PORT = 8899;
+
+	/**
+	 * The command code for "RGBW COLOR LED ALL OFF".
+	 */
+	public static final byte COMMAND_ALL_OFF = 0x41;
+	
+	/**
+	 * The command code for "RGBW COLOR LED ALL ON".
+	 */
+	public static final byte COMMAND_ALL_ON = 0x42;
+	
+	/**
+	 * The command code for "DISCO SPEED SLOWER".
+	 */
+	public static final byte COMMAND_DISCO_SLOWER = 0x43;
+	
+	/**
+	 * The command code for "DISCO SPEED FASTER".
+	 */
+	public static final byte COMMAND_DISCO_FASTER = 0x44;
+	
+	/**
+	 * The command code for "GROUP 1 ALL ON".
+	 */
+	public static final byte COMMAND_GROUP_1_ON = 0x45;
+	
+	/**
+	 * The command code for "GROUP 1 ALL OFF".
+	 */
+	public static final byte COMMAND_GROUP_1_OFF = 0x46;
+	
+	/**
+	 * The command code for "GROUP 2 ALL ON".
+	 */
+	public static final byte COMMAND_GROUP_2_ON = 0x47;
+	
+	/**
+	 * The command code for "GROUP 2 ALL OFF".
+	 */
+	public static final byte COMMAND_GROUP_2_OFF = 0x48;
+	
+	/**
+	 * The command code for "GROUP 3 ALL ON".
+	 */
+	public static final byte COMMAND_GROUP_3_ON = 0x49;
+	
+	/**
+	 * The command code for "GROUP 3 ALL OFF".
+	 */
+	public static final byte COMMAND_GROUP_3_OFF = 0x4A;
+	
+	/**
+	 * The command code for "GROUP 4 ALL ON".
+	 */
+	public static final byte COMMAND_GROUP_4_ON = 0x4B;
+	
+	/**
+	 * The command code for "GROUP 4 ALL OFF".
+	 */
+	public static final byte COMMAND_GROUP_4_OFF = 0x4C;
+	
+	/**
+	 * The command code for "DISCO MODE".
+	 */
+	public static final byte COMMAND_DISCO = 0x4D;
 
 	/**
 	 * A constructor creating a new instance of the WiFi box class.
@@ -90,7 +155,7 @@ public class WiFiBox {
 	 * @param message
 	 *            is the message code to send
 	 * @throws IOException
-	 *             if the message could not be send
+	 *             if the message could not be sent
 	 */
 	private void sendMessage(byte message) throws IOException {
 		// pad the message with 0x00 0x55
@@ -107,28 +172,69 @@ public class WiFiBox {
 	/**
 	 * Switch all lights off (all groups).
 	 * 
-	 * @return true if the message was send successfully
+	 * @throws IOException if the message could not be sent 
 	 */
-	public boolean switchAllOff() {
-		try {
-			sendMessage((byte) 0x41);
-			return true;
-		} catch (IOException e) {
-			return false;
-		}
+	public void switchAllOff() throws IOException {
+		sendMessage(COMMAND_ALL_OFF);
 	}
 
 	/**
 	 * Switch all lights on (all groups).
 	 * 
-	 * @return true if the message was send successfully
+	 * @throws IOException if the message could not be sent 
 	 */
-	public boolean switchAllOn() {
-		try {
-			sendMessage((byte) 0x42);
-			return true;
-		} catch (IOException e) {
-			return false;
+	public void switchAllOn() throws IOException {
+		sendMessage(COMMAND_ALL_ON);
+	}
+
+	/**
+	 * Switch all lights of a particular group off.
+	 * @param group the group to switch of (between 1 and 4)
+	 * @throws IOException if the message could not be sent
+	 * @throws IllegalArgumentException if the group number is not between 1 and 4
+	 */
+	public void switchGroupOff(int group) throws IOException, IllegalArgumentException {
+		switch(group) {
+		case 1:
+			sendMessage(COMMAND_GROUP_1_OFF);
+			break;
+		case 2:
+			sendMessage(COMMAND_GROUP_2_OFF);
+			break;
+		case 3:
+			sendMessage(COMMAND_GROUP_3_OFF);
+			break;
+		case 4:
+			sendMessage(COMMAND_GROUP_4_OFF);
+			break;
+		default:
+			throw new IllegalArgumentException("The group number must be between 1 and 4");
 		}
 	}
+
+	/**
+	 * Switch all lights of a particular group on.
+	 * @param group the group to switch of (between 1 and 4)
+	 * @throws IOException if the message could not be sent
+	 * @throws IllegalArgumentException if the group number is not between 1 and 4
+	 */
+	public void switchGroupOn(int group) throws IOException, IllegalArgumentException {
+		switch(group) {
+		case 1:
+			sendMessage(COMMAND_GROUP_1_ON);
+			break;
+		case 2:
+			sendMessage(COMMAND_GROUP_2_ON);
+			break;
+		case 3:
+			sendMessage(COMMAND_GROUP_3_ON);
+			break;
+		case 4:
+			sendMessage(COMMAND_GROUP_4_ON);
+			break;
+		default:
+			throw new IllegalArgumentException("The group number must be between 1 and 4");
+		}
+	}
+
 }
