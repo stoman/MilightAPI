@@ -39,19 +39,25 @@ public class WiFiBox {
 	public static final int COMMAND_ALL_OFF = 0x41;
 
 	/**
+	 * The command code for "GROUP 1 ALL OFF".
+	 */
+	public static final int COMMAND_GROUP_1_OFF = 0x46;
+	/**
+	 * The command code for "GROUP 2 ALL OFF".
+	 */
+	public static final int COMMAND_GROUP_2_OFF = 0x48;
+	/**
+	 * The command code for "GROUP 3 ALL OFF".
+	 */
+	public static final int COMMAND_GROUP_3_OFF = 0x4A;
+	/**
+	 * The command code for "GROUP 4 ALL OFF".
+	 */
+	public static final int COMMAND_GROUP_4_OFF = 0x4C;
+	/**
 	 * The command code for "RGBW COLOR LED ALL ON".
 	 */
 	public static final int COMMAND_ALL_ON = 0x42;
-
-	/**
-	 * The command code for "DISCO SPEED SLOWER".
-	 */
-	public static final int COMMAND_DISCO_SLOWER = 0x43;
-
-	/**
-	 * The command code for "DISCO SPEED FASTER".
-	 */
-	public static final int COMMAND_DISCO_FASTER = 0x44;
 
 	/**
 	 * The command code for "GROUP 1 ALL ON".
@@ -59,19 +65,9 @@ public class WiFiBox {
 	public static final int COMMAND_GROUP_1_ON = 0x45;
 
 	/**
-	 * The command code for "GROUP 1 ALL OFF".
-	 */
-	public static final int COMMAND_GROUP_1_OFF = 0x46;
-
-	/**
 	 * The command code for "GROUP 2 ALL ON".
 	 */
 	public static final int COMMAND_GROUP_2_ON = 0x47;
-
-	/**
-	 * The command code for "GROUP 2 ALL OFF".
-	 */
-	public static final int COMMAND_GROUP_2_OFF = 0x48;
 
 	/**
 	 * The command code for "GROUP 3 ALL ON".
@@ -79,24 +75,9 @@ public class WiFiBox {
 	public static final int COMMAND_GROUP_3_ON = 0x49;
 
 	/**
-	 * The command code for "GROUP 3 ALL OFF".
-	 */
-	public static final int COMMAND_GROUP_3_OFF = 0x4A;
-
-	/**
 	 * The command code for "GROUP 4 ALL ON".
 	 */
 	public static final int COMMAND_GROUP_4_ON = 0x4B;
-
-	/**
-	 * The command code for "GROUP 4 ALL OFF".
-	 */
-	public static final int COMMAND_GROUP_4_OFF = 0x4C;
-
-	/**
-	 * The command code for "DISCO MODE".
-	 */
-	public static final int COMMAND_DISCO = 0x4D;
 
 	/**
 	 * The command code for "SET COLOR TO WHITE (GROUP ALL)". Send an "ON"
@@ -127,6 +108,19 @@ public class WiFiBox {
 	 * 100ms before.
 	 */
 	public static final int COMMAND_GROUP_4_WHITE = 0xCB;
+
+	/**
+	 * The command code for "DISCO MODE".
+	 */
+	public static final int COMMAND_DISCO = 0x4D;
+	/**
+	 * The command code for "DISCO SPEED FASTER".
+	 */
+	public static final int COMMAND_DISCO_FASTER = 0x44;
+	/**
+	 * The command code for "DISCO SPEED SLOWER".
+	 */
+	public static final int COMMAND_DISCO_SLOWER = 0x43;
 
 	/**
 	 * A constructor creating a new instance of the WiFi box class.
@@ -240,18 +234,8 @@ public class WiFiBox {
 	 * @throws IOException
 	 *             if the message could not be sent
 	 */
-	public void allOff() throws IOException {
+	public void off() throws IOException {
 		sendMessage(COMMAND_ALL_OFF);
-	}
-
-	/**
-	 * Switch all lights on (all groups).
-	 * 
-	 * @throws IOException
-	 *             if the message could not be sent
-	 */
-	public void allOn() throws IOException {
-		sendMessage(COMMAND_ALL_ON);
 	}
 
 	/**
@@ -264,7 +248,7 @@ public class WiFiBox {
 	 * @throws IllegalArgumentException
 	 *             if the group number is not between 1 and 4
 	 */
-	public void groupOff(int group) throws IOException,
+	public void off(int group) throws IOException,
 			IllegalArgumentException {
 		switch (group) {
 		case 1:
@@ -286,6 +270,16 @@ public class WiFiBox {
 	}
 
 	/**
+	 * Switch all lights on (all groups).
+	 * 
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	public void on() throws IOException {
+		sendMessage(COMMAND_ALL_ON);
+	}
+
+	/**
 	 * Switch all lights of a particular group on.
 	 * 
 	 * @param group
@@ -295,7 +289,7 @@ public class WiFiBox {
 	 * @throws IllegalArgumentException
 	 *             if the group number is not between 1 and 4
 	 */
-	public void groupOn(int group) throws IOException, IllegalArgumentException {
+	public void on(int group) throws IOException, IllegalArgumentException {
 		switch (group) {
 		case 1:
 			sendMessage(COMMAND_GROUP_1_ON);
@@ -313,6 +307,54 @@ public class WiFiBox {
 			throw new IllegalArgumentException(
 					"The group number must be between 1 and 4");
 		}
+	}
+
+	/**
+	 * Switch all lights in all groups to the white mode. Note that the messages
+	 * are sent in a new thread. Therefore, you should not send other commands
+	 * directly after executing this one. Also, there are no exceptions when
+	 * sending messages fails since they occur in another thread.
+	 */
+	public void white() {
+		int[] messages = { COMMAND_ALL_ON, COMMAND_ALL_WHITE };
+		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+	}
+
+	/**
+	 * Switch all lights in a particular group to the white mode. Note that the
+	 * messages are sent in a new thread. Therefore, you should not send other
+	 * commands directly after executing this one. Also, there are no exceptions
+	 * when sending messages fails since they occur in another thread.
+	 * 
+	 * @param group
+	 *            the group to switch of (between 1 and 4)
+	 * @throws IllegalArgumentException
+	 *             if the group number is not between 1 and 4
+	 */
+	public void white(int group) throws IllegalArgumentException {
+		int[] messages = new int[2];
+		switch (group) {
+		case 1:
+			messages[0] = COMMAND_GROUP_1_ON;
+			messages[1] = COMMAND_GROUP_1_WHITE;
+			break;
+		case 2:
+			messages[0] = COMMAND_GROUP_2_ON;
+			messages[1] = COMMAND_GROUP_2_WHITE;
+			break;
+		case 3:
+			messages[0] = COMMAND_GROUP_3_ON;
+			messages[1] = COMMAND_GROUP_3_WHITE;
+			break;
+		case 4:
+			messages[0] = COMMAND_GROUP_4_ON;
+			messages[1] = COMMAND_GROUP_4_WHITE;
+			break;
+		default:
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
 	}
 
 	/**
@@ -380,54 +422,6 @@ public class WiFiBox {
 	 */
 	public void discoModeSlower() throws IOException {
 		sendMessage(COMMAND_DISCO_SLOWER);
-	}
-
-	/**
-	 * Switch all lights in all groups to the white mode. Note that the messages
-	 * are sent in a new thread. Therefore, you should not send other commands
-	 * directly after executing this one. Also, there are no exceptions when
-	 * sending messages fails since they occur in another thread.
-	 */
-	public void allWhite() {
-		int[] messages = { COMMAND_ALL_ON, COMMAND_ALL_WHITE };
-		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
-	}
-
-	/**
-	 * Switch all lights in a particular group to the white mode. Note that the
-	 * messages are sent in a new thread. Therefore, you should not send other
-	 * commands directly after executing this one. Also, there are no exceptions
-	 * when sending messages fails since they occur in another thread.
-	 * 
-	 * @param group
-	 *            the group to switch of (between 1 and 4)
-	 * @throws IllegalArgumentException
-	 *             if the group number is not between 1 and 4
-	 */
-	public void groupWhite(int group) throws IllegalArgumentException {
-		int[] messages = new int[2];
-		switch (group) {
-		case 1:
-			messages[0] = COMMAND_GROUP_1_ON;
-			messages[1] = COMMAND_GROUP_1_WHITE;
-			break;
-		case 2:
-			messages[0] = COMMAND_GROUP_2_ON;
-			messages[1] = COMMAND_GROUP_2_WHITE;
-			break;
-		case 3:
-			messages[0] = COMMAND_GROUP_3_ON;
-			messages[1] = COMMAND_GROUP_3_WHITE;
-			break;
-		case 4:
-			messages[0] = COMMAND_GROUP_4_ON;
-			messages[1] = COMMAND_GROUP_4_WHITE;
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"The group number must be between 1 and 4");
-		}
-		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
 	}
 
 }
