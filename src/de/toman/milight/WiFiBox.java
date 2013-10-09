@@ -28,69 +28,105 @@ public class WiFiBox {
 	public static final int DEFAULT_PORT = 8899;
 
 	/**
+	 * The sleep time between both messages for switching lights to the white
+	 * mode.
+	 */
+	public static final int SLEEP_BEFORE_WHITE = 100;
+
+	/**
 	 * The command code for "RGBW COLOR LED ALL OFF".
 	 */
-	public static final byte COMMAND_ALL_OFF = 0x41;
+	public static final int COMMAND_ALL_OFF = 0x41;
 
 	/**
 	 * The command code for "RGBW COLOR LED ALL ON".
 	 */
-	public static final byte COMMAND_ALL_ON = 0x42;
+	public static final int COMMAND_ALL_ON = 0x42;
 
 	/**
 	 * The command code for "DISCO SPEED SLOWER".
 	 */
-	public static final byte COMMAND_DISCO_SLOWER = 0x43;
+	public static final int COMMAND_DISCO_SLOWER = 0x43;
 
 	/**
 	 * The command code for "DISCO SPEED FASTER".
 	 */
-	public static final byte COMMAND_DISCO_FASTER = 0x44;
+	public static final int COMMAND_DISCO_FASTER = 0x44;
 
 	/**
 	 * The command code for "GROUP 1 ALL ON".
 	 */
-	public static final byte COMMAND_GROUP_1_ON = 0x45;
+	public static final int COMMAND_GROUP_1_ON = 0x45;
 
 	/**
 	 * The command code for "GROUP 1 ALL OFF".
 	 */
-	public static final byte COMMAND_GROUP_1_OFF = 0x46;
+	public static final int COMMAND_GROUP_1_OFF = 0x46;
 
 	/**
 	 * The command code for "GROUP 2 ALL ON".
 	 */
-	public static final byte COMMAND_GROUP_2_ON = 0x47;
+	public static final int COMMAND_GROUP_2_ON = 0x47;
 
 	/**
 	 * The command code for "GROUP 2 ALL OFF".
 	 */
-	public static final byte COMMAND_GROUP_2_OFF = 0x48;
+	public static final int COMMAND_GROUP_2_OFF = 0x48;
 
 	/**
 	 * The command code for "GROUP 3 ALL ON".
 	 */
-	public static final byte COMMAND_GROUP_3_ON = 0x49;
+	public static final int COMMAND_GROUP_3_ON = 0x49;
 
 	/**
 	 * The command code for "GROUP 3 ALL OFF".
 	 */
-	public static final byte COMMAND_GROUP_3_OFF = 0x4A;
+	public static final int COMMAND_GROUP_3_OFF = 0x4A;
 
 	/**
 	 * The command code for "GROUP 4 ALL ON".
 	 */
-	public static final byte COMMAND_GROUP_4_ON = 0x4B;
+	public static final int COMMAND_GROUP_4_ON = 0x4B;
 
 	/**
 	 * The command code for "GROUP 4 ALL OFF".
 	 */
-	public static final byte COMMAND_GROUP_4_OFF = 0x4C;
+	public static final int COMMAND_GROUP_4_OFF = 0x4C;
 
 	/**
 	 * The command code for "DISCO MODE".
 	 */
-	public static final byte COMMAND_DISCO = 0x4D;
+	public static final int COMMAND_DISCO = 0x4D;
+
+	/**
+	 * The command code for "SET COLOR TO WHITE (GROUP ALL)". Send an "ON"
+	 * command 100ms before.
+	 */
+	public static final int COMMAND_ALL_WHITE = 0xC2;
+
+	/**
+	 * The command code for "SET COLOR TO WHITE (GROUP 1)". Send an "ON" command
+	 * 100ms before.
+	 */
+	public static final int COMMAND_GROUP_1_WHITE = 0xC5;
+
+	/**
+	 * The command code for "SET COLOR TO WHITE (GROUP 2)". Send an "ON" command
+	 * 100ms before.
+	 */
+	public static final int COMMAND_GROUP_2_WHITE = 0xC7;
+
+	/**
+	 * The command code for "SET COLOR TO WHITE (GROUP 3)". Send an "ON" command
+	 * 100ms before.
+	 */
+	public static final int COMMAND_GROUP_3_WHITE = 0xC9;
+
+	/**
+	 * The command code for "SET COLOR TO WHITE (GROUP 4)". Send an "ON" command
+	 * 100ms before.
+	 */
+	public static final int COMMAND_GROUP_4_WHITE = 0xCB;
 
 	/**
 	 * A constructor creating a new instance of the WiFi box class.
@@ -149,7 +185,7 @@ public class WiFiBox {
 	}
 
 	/**
-	 * This function sends a one-byte control message to the WiFi box. The
+	 * This function sends a one-int control message to the WiFi box. The
 	 * message is padded with 0x00 0x55 as given in the documentation.
 	 * 
 	 * @param message
@@ -157,9 +193,9 @@ public class WiFiBox {
 	 * @throws IOException
 	 *             if the message could not be sent
 	 */
-	private void sendMessage(byte message) throws IOException {
+	private void sendMessage(int message) throws IOException {
 		// pad the message with 0x00 0x55
-		byte[] paddedMessage = { message, 0x55 & 0x00, 0x55 & 0x55 };
+		byte[] paddedMessage = { (byte) message, 0x55 & 0x00, 0x55 & 0x55 };
 
 		// send the padded message
 		DatagramSocket socket = new DatagramSocket();
@@ -167,6 +203,35 @@ public class WiFiBox {
 				paddedMessage.length, address, port);
 		socket.send(packet);
 		socket.close();
+	}
+
+	/**
+	 * This function sends multiple one-int messages to the WiFi box. All of the
+	 * are padded with the corresponding ints. Note that the messages are sent
+	 * in a new thread. Therefore, you should not send other commands directly
+	 * after executing this one. Also, there are no exceptions when sending
+	 * messages fails since they occur in another thread.
+	 * 
+	 * @param messages
+	 *            is the messages to send (in order)
+	 * @param sleep
+	 *            is the time to wait between two message in milliseconds
+	 */
+	private void sendMultipleMessages(final int[] messages, final long sleep) {
+		new Thread(new Runnable() {
+			public void run() {
+				try {
+					for (int message : messages) {
+						WiFiBox.this.sendMessage(message);
+						Thread.sleep(sleep);
+					}
+				} catch (IOException e) {
+					// if the message could not be sent
+				} catch (InterruptedException e) {
+					// if the thread could not sleep
+				}
+			}
+		}).start();
 	}
 
 	/**
@@ -282,4 +347,53 @@ public class WiFiBox {
 	public void discoModeSlower() throws IOException {
 		sendMessage(COMMAND_DISCO_SLOWER);
 	}
+
+	/**
+	 * Switch all lights in all groups to the white mode. Note that the messages
+	 * are sent in a new thread. Therefore, you should not send other commands
+	 * directly after executing this one. Also, there are no exceptions when
+	 * sending messages fails since they occur in another thread.
+	 */
+	public void allWhite() {
+		int[] messages = { COMMAND_ALL_ON, COMMAND_ALL_WHITE };
+		sendMultipleMessages(messages, SLEEP_BEFORE_WHITE);
+	}
+
+	/**
+	 * Switch all lights in a particular group to the white mode. Note that the
+	 * messages are sent in a new thread. Therefore, you should not send other
+	 * commands directly after executing this one. Also, there are no exceptions
+	 * when sending messages fails since they occur in another thread.
+	 * 
+	 * @param group
+	 *            the group to switch of (between 1 and 4)
+	 * @throws IllegalArgumentException
+	 *             if the group number is not between 1 and 4
+	 */
+	public void groupWhite(int group) throws IllegalArgumentException {
+		int[] messages = new int[2];
+		switch (group) {
+		case 1:
+			messages[0] = COMMAND_GROUP_1_ON;
+			messages[1] = COMMAND_GROUP_1_WHITE;
+			break;
+		case 2:
+			messages[0] = COMMAND_GROUP_2_ON;
+			messages[1] = COMMAND_GROUP_2_WHITE;
+			break;
+		case 3:
+			messages[0] = COMMAND_GROUP_3_ON;
+			messages[1] = COMMAND_GROUP_3_WHITE;
+			break;
+		case 4:
+			messages[0] = COMMAND_GROUP_4_ON;
+			messages[1] = COMMAND_GROUP_4_WHITE;
+			break;
+		default:
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+		sendMultipleMessages(messages, SLEEP_BEFORE_WHITE);
+	}
+
 }
