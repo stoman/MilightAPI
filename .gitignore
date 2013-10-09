@@ -1,0 +1,15 @@
+# Tests #
+src/de/toman/milight/test/*
+
+# Binaries #
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Configuration Files #
+.classpath
+.project
+.settings/*
