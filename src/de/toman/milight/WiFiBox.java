@@ -31,62 +31,62 @@ public class WiFiBox {
 	 * The command code for "RGBW COLOR LED ALL OFF".
 	 */
 	public static final byte COMMAND_ALL_OFF = 0x41;
-	
+
 	/**
 	 * The command code for "RGBW COLOR LED ALL ON".
 	 */
 	public static final byte COMMAND_ALL_ON = 0x42;
-	
+
 	/**
 	 * The command code for "DISCO SPEED SLOWER".
 	 */
 	public static final byte COMMAND_DISCO_SLOWER = 0x43;
-	
+
 	/**
 	 * The command code for "DISCO SPEED FASTER".
 	 */
 	public static final byte COMMAND_DISCO_FASTER = 0x44;
-	
+
 	/**
 	 * The command code for "GROUP 1 ALL ON".
 	 */
 	public static final byte COMMAND_GROUP_1_ON = 0x45;
-	
+
 	/**
 	 * The command code for "GROUP 1 ALL OFF".
 	 */
 	public static final byte COMMAND_GROUP_1_OFF = 0x46;
-	
+
 	/**
 	 * The command code for "GROUP 2 ALL ON".
 	 */
 	public static final byte COMMAND_GROUP_2_ON = 0x47;
-	
+
 	/**
 	 * The command code for "GROUP 2 ALL OFF".
 	 */
 	public static final byte COMMAND_GROUP_2_OFF = 0x48;
-	
+
 	/**
 	 * The command code for "GROUP 3 ALL ON".
 	 */
 	public static final byte COMMAND_GROUP_3_ON = 0x49;
-	
+
 	/**
 	 * The command code for "GROUP 3 ALL OFF".
 	 */
 	public static final byte COMMAND_GROUP_3_OFF = 0x4A;
-	
+
 	/**
 	 * The command code for "GROUP 4 ALL ON".
 	 */
 	public static final byte COMMAND_GROUP_4_ON = 0x4B;
-	
+
 	/**
 	 * The command code for "GROUP 4 ALL OFF".
 	 */
 	public static final byte COMMAND_GROUP_4_OFF = 0x4C;
-	
+
 	/**
 	 * The command code for "DISCO MODE".
 	 */
@@ -172,29 +172,36 @@ public class WiFiBox {
 	/**
 	 * Switch all lights off (all groups).
 	 * 
-	 * @throws IOException if the message could not be sent 
+	 * @throws IOException
+	 *             if the message could not be sent
 	 */
-	public void switchAllOff() throws IOException {
+	public void allOff() throws IOException {
 		sendMessage(COMMAND_ALL_OFF);
 	}
 
 	/**
 	 * Switch all lights on (all groups).
 	 * 
-	 * @throws IOException if the message could not be sent 
+	 * @throws IOException
+	 *             if the message could not be sent
 	 */
-	public void switchAllOn() throws IOException {
+	public void allOn() throws IOException {
 		sendMessage(COMMAND_ALL_ON);
 	}
 
 	/**
 	 * Switch all lights of a particular group off.
-	 * @param group the group to switch of (between 1 and 4)
-	 * @throws IOException if the message could not be sent
-	 * @throws IllegalArgumentException if the group number is not between 1 and 4
+	 * 
+	 * @param group
+	 *            the group to switch of (between 1 and 4)
+	 * @throws IOException
+	 *             if the message could not be sent
+	 * @throws IllegalArgumentException
+	 *             if the group number is not between 1 and 4
 	 */
-	public void switchGroupOff(int group) throws IOException, IllegalArgumentException {
-		switch(group) {
+	public void groupOff(int group) throws IOException,
+			IllegalArgumentException {
+		switch (group) {
 		case 1:
 			sendMessage(COMMAND_GROUP_1_OFF);
 			break;
@@ -208,18 +215,23 @@ public class WiFiBox {
 			sendMessage(COMMAND_GROUP_4_OFF);
 			break;
 		default:
-			throw new IllegalArgumentException("The group number must be between 1 and 4");
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
 		}
 	}
 
 	/**
 	 * Switch all lights of a particular group on.
-	 * @param group the group to switch of (between 1 and 4)
-	 * @throws IOException if the message could not be sent
-	 * @throws IllegalArgumentException if the group number is not between 1 and 4
+	 * 
+	 * @param group
+	 *            the group to switch of (between 1 and 4)
+	 * @throws IOException
+	 *             if the message could not be sent
+	 * @throws IllegalArgumentException
+	 *             if the group number is not between 1 and 4
 	 */
-	public void switchGroupOn(int group) throws IOException, IllegalArgumentException {
-		switch(group) {
+	public void groupOn(int group) throws IOException, IllegalArgumentException {
+		switch (group) {
 		case 1:
 			sendMessage(COMMAND_GROUP_1_ON);
 			break;
@@ -233,8 +245,41 @@ public class WiFiBox {
 			sendMessage(COMMAND_GROUP_4_ON);
 			break;
 		default:
-			throw new IllegalArgumentException("The group number must be between 1 and 4");
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
 		}
 	}
 
+	/**
+	 * Trigger the disco mode for the active group of lights (the last one that
+	 * was switched on).
+	 * 
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	public void discoMode() throws IOException {
+		sendMessage(COMMAND_DISCO);
+	}
+
+	/**
+	 * Increase the disco mode's speed for the active group of lights (the last
+	 * one that was switched on).
+	 * 
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	public void discoModeFaster() throws IOException {
+		sendMessage(COMMAND_DISCO_FASTER);
+	}
+
+	/**
+	 * Decrease the disco mode's speed for the active group of lights (the last
+	 * one that was switched on).
+	 * 
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	public void discoModeSlower() throws IOException {
+		sendMessage(COMMAND_DISCO_SLOWER);
+	}
 }
