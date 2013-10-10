@@ -114,14 +114,27 @@ public class WiFiBox {
 	 * The command code for "DISCO MODE".
 	 */
 	public static final int COMMAND_DISCO = 0x4D;
+
 	/**
 	 * The command code for "DISCO SPEED FASTER".
 	 */
 	public static final int COMMAND_DISCO_FASTER = 0x44;
+
 	/**
 	 * The command code for "DISCO SPEED SLOWER".
 	 */
 	public static final int COMMAND_DISCO_SLOWER = 0x43;
+
+	/**
+	 * The command code for "DIRECT BRIGHTNESS SETTING" (part of a two-byte
+	 * command).
+	 */
+	public static final int COMMAND_BRIGHTNESS = 0x4E;
+
+	/**
+	 * The maximum brightness value, starting at 0.
+	 */
+	public static final int MAX_BRIGHTNESS = 0x3B;
 
 	/**
 	 * A constructor creating a new instance of the WiFi box class.
@@ -215,6 +228,25 @@ public class WiFiBox {
 	private void sendMessage(int message) throws IOException {
 		// pad the message with 0x00 0x55
 		byte[] paddedMessage = { (byte) message, 0x55 & 0x00, 0x55 & 0x55 };
+
+		// send the padded message
+		sendMessage(paddedMessage);
+	}
+
+	/**
+	 * This function sends a two-byte control message to the WiFi box. The
+	 * message is padded with 0x55 as given in the documentation.
+	 * 
+	 * @param message1
+	 *            is the first byte of the message to send
+	 * @param message2
+	 *            is the second byte of the message to send
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	private void sendMessage(int message1, int message2) throws IOException {
+		// pad the message with 0x55
+		byte[] paddedMessage = { (byte) message1, (byte) message2, 0x55 & 0x55 };
 
 		// send the padded message
 		sendMessage(paddedMessage);
@@ -444,4 +476,28 @@ public class WiFiBox {
 		sendMessage(COMMAND_DISCO_SLOWER);
 	}
 
+	/**
+	 * Set the brightness value for the currently active group of lights (the
+	 * last one that was switched on).
+	 * 
+	 * @param value
+	 *            is the brightness value to set (between 0 and
+	 *            WiFiBox.MAX_BRIGHTNESS)
+	 * @throws IOException
+	 *             if the message could not be sent
+	 * @throws IllegalArgumentException
+	 *             if the brightness value is not between 0 and
+	 *             WiFiBox.MAX_BRIGHTNESS
+	 */
+	public void brightness(int value) throws IOException,
+			IllegalArgumentException {
+		// check argument
+		if (value < 0 || value > MAX_BRIGHTNESS) {
+			throw new IllegalArgumentException(
+					"The brightness value should be between 0 and WiFiBox.MAX_BRIGHTNESS");
+		}
+
+		// send message to the WiFi box
+		sendMessage(COMMAND_BRIGHTNESS, value);
+	}
 }
