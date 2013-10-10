@@ -17,6 +17,7 @@ public class WiFiBox {
 	 * The address of the WiFi box
 	 */
 	private InetAddress address;
+
 	/**
 	 * The port of the WiFi box
 	 */
@@ -179,7 +180,31 @@ public class WiFiBox {
 	}
 
 	/**
-	 * This function sends a one-int control message to the WiFi box. The
+	 * This function sends an array of bytes to the WiFi box. The bytes should
+	 * be a valid command, i.e. the array's length should be three.
+	 * 
+	 * @param messages
+	 *            is an array of message codes to send
+	 * @throws IllegalArgumentException
+	 *             if the length of the array is not 3
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	private void sendMessage(byte[] messages) throws IOException {
+		if (messages.length != 3) {
+			throw new IllegalArgumentException(
+					"The message to send should consist of exactly 3 bytes.");
+		}
+
+		DatagramSocket socket = new DatagramSocket();
+		DatagramPacket packet = new DatagramPacket(messages, messages.length,
+				address, port);
+		socket.send(packet);
+		socket.close();
+	}
+
+	/**
+	 * This function sends an one-byte control message to the WiFi box. The
 	 * message is padded with 0x00 0x55 as given in the documentation.
 	 * 
 	 * @param message
@@ -192,19 +217,15 @@ public class WiFiBox {
 		byte[] paddedMessage = { (byte) message, 0x55 & 0x00, 0x55 & 0x55 };
 
 		// send the padded message
-		DatagramSocket socket = new DatagramSocket();
-		DatagramPacket packet = new DatagramPacket(paddedMessage,
-				paddedMessage.length, address, port);
-		socket.send(packet);
-		socket.close();
+		sendMessage(paddedMessage);
 	}
 
 	/**
-	 * This function sends multiple one-int messages to the WiFi box. All of the
-	 * are padded with the corresponding ints. Note that the messages are sent
-	 * in a new thread. Therefore, you should not send other commands directly
-	 * after executing this one. Also, there are no exceptions when sending
-	 * messages fails since they occur in another thread.
+	 * This function sends multiple one-byte messages to the WiFi box. All of
+	 * the are padded with the corresponding ints. Note that the messages are
+	 * sent in a new thread. Therefore, you should not send other commands
+	 * directly after executing this one. Also, there are no exceptions when
+	 * sending messages fails since they occur in another thread.
 	 * 
 	 * @param messages
 	 *            is the messages to send (in order)
@@ -248,8 +269,7 @@ public class WiFiBox {
 	 * @throws IllegalArgumentException
 	 *             if the group number is not between 1 and 4
 	 */
-	public void off(int group) throws IOException,
-			IllegalArgumentException {
+	public void off(int group) throws IOException, IllegalArgumentException {
 		switch (group) {
 		case 1:
 			sendMessage(COMMAND_GROUP_1_OFF);
