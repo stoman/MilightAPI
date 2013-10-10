@@ -217,6 +217,34 @@ public class WiFiBox {
 	}
 
 	/**
+	 * This function pads a one-byte message to a three-byte message by adding
+	 * the default bytes 0x00 0x55.
+	 * 
+	 * @param message
+	 *            is the message to pad
+	 * @return is the padded message
+	 */
+	private byte[] padMessage(int message) {
+		byte[] paddedMessage = { (byte) message, 0x55 & 0x00, 0x55 & 0x55 };
+		return paddedMessage;
+	}
+
+	/**
+	 * This function pads a two-byte message to a three-byte message by adding
+	 * the default byte 0x55.
+	 * 
+	 * @param message1
+	 *            is the first byte of the message to pad
+	 * @param message2
+	 *            is the second byte of the message to pad
+	 * @return is the padded message
+	 */
+	private byte[] padMessage(int message1, int message2) {
+		byte[] paddedMessage = { (byte) message1, (byte) message2, 0x55 & 0x55 };
+		return paddedMessage;
+	}
+
+	/**
 	 * This function sends an one-byte control message to the WiFi box. The
 	 * message is padded with 0x00 0x55 as given in the documentation.
 	 * 
@@ -227,7 +255,7 @@ public class WiFiBox {
 	 */
 	private void sendMessage(int message) throws IOException {
 		// pad the message with 0x00 0x55
-		byte[] paddedMessage = { (byte) message, 0x55 & 0x00, 0x55 & 0x55 };
+		byte[] paddedMessage = padMessage(message);
 
 		// send the padded message
 		sendMessage(paddedMessage);
@@ -246,29 +274,43 @@ public class WiFiBox {
 	 */
 	private void sendMessage(int message1, int message2) throws IOException {
 		// pad the message with 0x55
-		byte[] paddedMessage = { (byte) message1, (byte) message2, 0x55 & 0x55 };
+		byte[] paddedMessage = padMessage(message1, message2);
 
 		// send the padded message
 		sendMessage(paddedMessage);
 	}
 
 	/**
-	 * This function sends multiple one-byte messages to the WiFi box. All of
-	 * the are padded with the corresponding ints. Note that the messages are
-	 * sent in a new thread. Therefore, you should not send other commands
-	 * directly after executing this one. Also, there are no exceptions when
-	 * sending messages fails since they occur in another thread.
+	 * This function sends multiple three-byte messages to the WiFi box. All
+	 * elements of the message array should be byte arrays with three elements.
+	 * Note that the messages are sent in a new thread. Therefore, you should
+	 * not send other commands directly after executing this one. Also, there
+	 * are no exceptions when sending messages fails since they occur in another
+	 * thread.
 	 * 
 	 * @param messages
 	 *            is the messages to send (in order)
 	 * @param sleep
 	 *            is the time to wait between two message in milliseconds
+	 * @throws IllegalArgumentException
+	 *             if some of the messages in the array don't consist of exactly
+	 *             three bytes
 	 */
-	private void sendMultipleMessages(final int[] messages, final long sleep) {
+	private void sendMultipleMessages(final byte[][] messages, final long sleep)
+			throws IllegalArgumentException {
+		// check arguments
+		for (int i = 0; i < messages.length; i++) {
+			if (messages[i].length != 3) {
+				throw new IllegalArgumentException(
+						"All messages should consist of three bytes.");
+			}
+		}
+
+		// start new thread
 		new Thread(new Runnable() {
 			public void run() {
 				try {
-					for (int message : messages) {
+					for (byte[] message : messages) {
 						WiFiBox.this.sendMessage(message);
 						Thread.sleep(sleep);
 					}
@@ -279,6 +321,29 @@ public class WiFiBox {
 				}
 			}
 		}).start();
+	}
+
+	/**
+	 * This function sends multiple one-byte messages to the WiFi box. All of
+	 * the are padded with the corresponding bytes. Note that the messages are
+	 * sent in a new thread. Therefore, you should not send other commands
+	 * directly after executing this one. Also, there are no exceptions when
+	 * sending messages fails since they occur in another thread.
+	 * 
+	 * @param messages
+	 *            is the messages to send (in order)
+	 * @param sleep
+	 *            is the time to wait between two message in milliseconds
+	 */
+	private void sendMultipleMessages(final int[] messages, final long sleep) {
+		// pad messages
+		byte[][] paddedMessages = new byte[messages.length][3];
+		for (int i = 0; i < messages.length; i++) {
+			paddedMessages[i] = padMessage(messages[i]);
+		}
+
+		// send the padded messages
+		sendMultipleMessages(paddedMessages, sleep);
 	}
 
 	/**
@@ -384,6 +449,7 @@ public class WiFiBox {
 	 *             if the group number is not between 1 and 4
 	 */
 	public void white(int group) throws IllegalArgumentException {
+		// create message array
 		int[] messages = new int[2];
 		switch (group) {
 		case 1:
@@ -406,6 +472,8 @@ public class WiFiBox {
 			throw new IllegalArgumentException(
 					"The group number must be between 1 and 4");
 		}
+
+		// send messages
 		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
 	}
 
@@ -433,6 +501,7 @@ public class WiFiBox {
 	 *             if the group number is not between 1 and 4
 	 */
 	public void discoMode(int group) throws IllegalArgumentException {
+		// create message array
 		int[] messages = { 0, COMMAND_DISCO };
 		switch (group) {
 		case 1:
@@ -451,6 +520,8 @@ public class WiFiBox {
 			throw new IllegalArgumentException(
 					"The group number must be between 1 and 4");
 		}
+
+		// send messages
 		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
 	}
 
@@ -499,5 +570,56 @@ public class WiFiBox {
 
 		// send message to the WiFi box
 		sendMessage(COMMAND_BRIGHTNESS, value);
+	}
+
+	/**
+	 * Set the brightness value for a given group of lights.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the brightness for
+	 * @param value
+	 *            is the brightness value to set (between 0 and
+	 *            WiFiBox.MAX_BRIGHTNESS)
+	 * @throws IOException
+	 *             if the message could not be sent
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4 or the brightness value is
+	 *             not between 0 and WiFiBox.MAX_BRIGHTNESS
+	 */
+	public void brightness(int group, int value) throws IOException,
+			IllegalArgumentException {
+		// check arguments
+		if (value < 0 || value > MAX_BRIGHTNESS) {
+			throw new IllegalArgumentException(
+					"The brightness value should be between 0 and WiFiBox.MAX_BRIGHTNESS");
+		}
+
+		// create message array
+		byte[][] messages = new byte[2][3];
+
+		// switch on first
+		switch (group) {
+		case 1:
+			messages[0] = padMessage(COMMAND_GROUP_1_ON);
+			break;
+		case 2:
+			messages[0] = padMessage(COMMAND_GROUP_2_ON);
+			break;
+		case 3:
+			messages[0] = padMessage(COMMAND_GROUP_3_ON);
+			break;
+		case 4:
+			messages[0] = padMessage(COMMAND_GROUP_4_ON);
+			break;
+		default:
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+
+		// adjust brightness
+		messages[1] = padMessage(COMMAND_BRIGHTNESS, value);
+
+		// send messages
+		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
 	}
 }
