@@ -126,6 +126,17 @@ public class WiFiBox {
 	public static final int COMMAND_DISCO_SLOWER = 0x43;
 
 	/**
+	 * The command code for "COLOR SETTING" (part of a two-byte
+	 * command).
+	 */
+	public static final int COMMAND_COLOR = 0x40;
+
+	/**
+	 * The maximum color value, starting at 0.
+	 */
+	public static final int MAX_COLOR = 0xFF;
+
+	/**
 	 * The command code for "DIRECT BRIGHTNESS SETTING" (part of a two-byte
 	 * command).
 	 */
@@ -618,6 +629,82 @@ public class WiFiBox {
 
 		// adjust brightness
 		messages[1] = padMessage(COMMAND_BRIGHTNESS, value);
+
+		// send messages
+		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+	}
+	
+	/**
+	 * Set the color value for the currently active group of lights (the
+	 * last one that was switched on).
+	 * 
+	 * @param value
+	 *            is the color value to set (between 0 and
+	 *            WiFiBox.MAX_COLOR)
+	 * @throws IOException
+	 *             if the message could not be sent
+	 * @throws IllegalArgumentException
+	 *             if the color value is not between 0 and
+	 *             WiFiBox.MAX_COLOR
+	 */
+	public void color(int value) throws IOException,
+			IllegalArgumentException {
+		// check argument
+		if (value < 0 || value > MAX_COLOR) {
+			throw new IllegalArgumentException(
+					"The color value should be between 0 and WiFiBox.MAX_COLOR");
+		}
+
+		// send message to the WiFi box
+		sendMessage(COMMAND_COLOR, value);
+	}
+
+	/**
+	 * Set the color value for a given group of lights.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param value
+	 *            is the color value to set (between 0 and
+	 *            WiFiBox.MAX_COLOR)
+	 * @throws IOException
+	 *             if the message could not be sent
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4 or the color value is
+	 *             not between 0 and WiFiBox.MAX_COLOR
+	 */
+	public void color(int group, int value) throws IOException,
+			IllegalArgumentException {
+		// check arguments
+		if (value < 0 || value > MAX_COLOR) {
+			throw new IllegalArgumentException(
+					"The color value should be between 0 and WiFiBox.MAX_COLOR");
+		}
+
+		// create message array
+		byte[][] messages = new byte[2][3];
+
+		// switch on first
+		switch (group) {
+		case 1:
+			messages[0] = padMessage(COMMAND_GROUP_1_ON);
+			break;
+		case 2:
+			messages[0] = padMessage(COMMAND_GROUP_2_ON);
+			break;
+		case 3:
+			messages[0] = padMessage(COMMAND_GROUP_3_ON);
+			break;
+		case 4:
+			messages[0] = padMessage(COMMAND_GROUP_4_ON);
+			break;
+		default:
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+
+		// adjust brightness
+		messages[1] = padMessage(COMMAND_COLOR, value);
 
 		// send messages
 		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
