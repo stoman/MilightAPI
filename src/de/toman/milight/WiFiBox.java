@@ -703,7 +703,7 @@ public class WiFiBox {
 					"The group number must be between 1 and 4");
 		}
 
-		// adjust brightness
+		// adjust color
 		messages[1] = padMessage(COMMAND_COLOR, value);
 
 		// send messages
