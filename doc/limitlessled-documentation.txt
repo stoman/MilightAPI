@@ -1,0 +1,603 @@
+LimitlessLED Technical Developer Opensource API
+
+LAST UPDATED: 20th September 2013
+
+*NEW* LimitlessLED v3.0 OpenSource API
+
+Sept 2013: Released NEW LimitlessLED Wifi Bridge version 3.0
+
+The control commands are backwards compatible with the WiFi Bridge v2.0 below.
+
+The IP Address is now assigned automatically using DHCP. You can find the current IP address of your wifi bridge in your routers DHCP table with the same MAC address as displayed on the LimitlessLED App 3.0 first network scan screen. Or you can broadcast UDP command packets to all wifi bridges on your local network, by changing the last digit in the IP address to 255, i.e. 10.1.1.255
+
+NEW Port Number: 8899
+The Port Number most importantly has changed from 50000 to 8899
+
+EXCEL VBA Fixed Code to work with and support the new Port number:
+change from “Long” to “Integer”
+Public Declare Function htons Lib “ws2_32? (ByVal hostshort As Integer) As Integer
+
+RGB+W LimitlessLED Light Bulb Commands
+
+
+
+All UDP Commands are 3 Bytes. First byte is from the list below, plus a fixed 2 byte suffix of 0x00 (decimal: 0) and 0x55 (decimal: 85)
+
+i.e. to turn all RGBW COLOR LimitlessLED Smart lights to ON then send the TCP/IP UDP packet of:  0x42 0x00 0x55
+
+	            Hexidecimal (byte)	 Decimal (integer)
+
+RGBW COLOR LED ALL OFF	   0x41	           65
+
+RGBW COLOR LED ALL ON	   0x42	           66
+
+DISCO SPEED SLOWER	   0x43	           67
+
+DISCO SPEED FASTER	   0x44	           68
+
+GROUP 1 ALL ON		   0x45	           69	(SYNC/PAIR RGB+W Bulb within 2 seconds of Wall Switch Power being turned ON)
+
+GROUP 1 ALL OFF		   0x46	           70
+
+GROUP 2 ALL ON		   0x47	           71	(SYNC/PAIR RGB+W Bulb within 2 seconds of Wall Switch Power being turned ON)
+
+GROUP 2 ALL OFF		   0x48	           72
+
+GROUP 3 ALL ON		   0x49	           73	(SYNC/PAIR RGB+W Bulb within 2 seconds of Wall Switch Power being turned ON)
+
+GROUP 3 ALL OFF		   0x4A	           74
+
+GROUP 4 ALL ON		   0x4B	           75	(SYNC/PAIR RGB+W Bulb within 2 seconds of Wall Switch Power being turned ON)
+
+GROUP 4 ALL OFF		   0x4C	           76
+
+DISCO MODE	           0x4D	           77
+
+SET COLOR TO WHITE (GROUP ALL)  0x42    100ms followed by:	0xC2
+
+SET COLOR TO WHITE (GROUP 1)    0x45	100ms followed by:	0xC5
+
+SET COLOR TO WHITE (GROUP 2)    0x47	100ms followed by:	0xC7
+
+SET COLOR TO WHITE (GROUP 3)    0x49	100ms followed by:	0xC9
+
+SET COLOR TO WHITE (GROUP 4)    0x4B	100ms followed by:	0xCB
+
+
+
+LIMITLESSLED RGBW DIRECT BRIGHTNESS SETTING is by a 3BYTE COMMAND: (First send the Group ON for the group you want to set the brightness for. You send the group ON command 100ms before sending the 4E 00 55)
+Byte1: 0x4E (decimal: 78)
+Byte2: 0×00 to 0xFF (full brightness 0x3B)
+Byte3: Always 0×55 (decimal: 85)
+
+LIMITLESSLED RGBW COLOR SETTING is by a 3BYTE COMMAND: (First send the Group ON for the group you want to set the colour for. You send the group ON command 100ms before sending the 40)
+Byte1: 0×40 (decimal: 64)
+Byte2: 0×00 to 0xFF (255 colors) Color Matrix Chart [COMING SOON] Byte3: Always 0×55 (decimal: 85)
+
+Night modes, not implemented for RGBW, but referenced here for completeness..
+NIGHT MODE ALL	 0×41	100ms followed by:	0xC1 (not implemented in limitlessled wifi bridge 3.0)
+NIGHT SAVER MODE GROUP 1	0×46	100ms followed by:	0xC6 (not implemented in limitlessled wifi bridge 3.0)
+NIGHT SAVER MODE GROUP 2	0×48	100ms followed by:	0xC8 (not implemented in limitlessled wifi bridge 3.0)
+NIGHT SAVER MODE GROUP 3	0x4A	100ms followed by:	0xCA (not implemented in limitlessled wifi bridge 3.0)
+NIGHT SAVER MODE GROUP 4	0x4C	100ms followed by:	0xCC (not implemented in limitlessled wifi bridge 3.0)
+
+Special NOTE #1: The LimitlessLED bulb remembers its own Brightness setting memory separately for ColorRGB and separately for White. For example dimming Green, then switching to White full brightness, and when you go back to a specific color the brightness returns to what the ColorRGB was before. Same vice versa for the White. The previous brightness setting is remembered specifically for the White and specifically for the ColorRGB.
+Special Note #2: for Java: To convert from a decimal number to a signed byte use the 0xFF like this: cmdBytes[0] = 85 & 0xFF;
+Special Note #3: for Visual Basic: To use a hexadecimal number, you can put &H in front instead of 0x for example: 0×41 would be &H41
+Special Note #4: If you don’t know the IP address of the Wifi Bridge, You can also broadcast All Groups ON to all wifi bridges on the LAN network by using the IP address with the last number as .255 or you can use the IP address of 255.255.255.255, which will do a full LAN broadcast to all wifi bridges on this Local network only.
+Special Note #5: With the new LimitlessLED Wifi Bridge 3.0 it is no longer necessary to send the 3rd byte (0×55) in the UDP packet, you can just send the 1st and 2nd bytes which will be faster, this also applies to the backward compatible RGB and DUAL White LEDs when using wifi bridge 3.0. But to remain backwards compatible with wifi bridge 2.0 it is advisable to always send the 3rd byte 0×55 in the UDP packet for RGB and WHITE bulbs, but it is not necessary to send 3 bytes for the new RGBW bulbs(just two is ok for them).
+Special Note #6: To Clear the PAIRED/SYNCED bulb from all of its Groups.. Press-And-Hold its Group ON button within 2 seconds of turning the light socket power ON.
+
+LimitlessLED v2.0 OpenSource API for Developers
+Aug 2013: Added Python example code.
+Aug 2013: Added Linux example script.
+Jul 2013: Added CasualLight Voice Control of LimitlessLED Lights.
+Jul 2013: Added Ruby example opensource code.
+May 2013: Android AutoVoice and Tasker/Locale added for control of LimitlessLED wireless lighting.
+Apr 2013: Added Links to opensource programming projects.
+Mar 2013: Added Excel Macro VBA code.
+Dec 2012: Added VB.NET/C#.net code.
+Jul 2012: Added Android Java example code.
+Jun 2012: Added iPhone/iPad xcode example.
+
+LimitlessLED OpenSource Projects
+CasualLight Voice Control of LimitlessLED Lights. by Joris studying at Waikato University, New Zealand.
+https://chrome.google.com/webstore/detail/casuallight/kehomlifkcmfagnefddfmiiemeaiogfj
+
+Windows7/8 OpenSource LimitlessLED Application (commandline app written in Microsoft C#.Net).
+https://github.com/qyiet/LimitlessLED by Glen Balks from New Zealand.
+
+HTML/Javascript LimitlessLED Application (ninjablocks).
+https://github.com/jzGreen/ninja-limitlessLED
+Youtube: NinjaBlocks/LimitlessLED and RFID
+Youtube: Limitlessled and ninja blocks
+
+cloverleaf LimitlessLED Ruby github opensource by brandon
+https://github.com/brandon-dacrib/cloverleaf/blob/master/app/helpers/limitlessled-rgb.rb
+
+Now you can control your LimitlessLED lights on Android using AutoVoice and Tasker/Locale.
+
+LimitlessLED LightShow made in Perl programming language by Prof. Matt Carter from Bond University
+https://github.com/hash-bang/Lightshow
+provides a simple command line program to command the lighting system as well as also supports easy to program lighting macros – fake fire place lighting, time-of-day settings etc.
+Matt is also working on an XBMC/BoxEE plugin for media centers so that you can control the lights from your TV. Great work Matt, look forward to this one.
+
+Jon Benson from Australia has built this great Tasker app.
+
+Tasker stays in memory when launched once, so it displays almost instantly.
+The current app (which simply allows sending UDP packets by acting as a plugin for Tasker/Locale) is free and will remain so.
+
+Here is the Github webpage:
+http://hastarin.github.io/android-udpsender/
+
+and here is the Play Store link:
+https://play.google.com/store/apps/details?id=com.hastarin.android.udpsender
+
+To give you an idea of how it can be used, Jon has set this up so far…
+• Gesture control via my launcher (Nova) to turn all lights on/off/full bright/night mode and dim/brighten lights.
+• Using the Scene shown above I can turn all/individual zones on/off and control bright/dim/warm/cool.
+• NOTE: A swipe up/down in the colored square controls a bright/dim ramp and left/right for warm/cool.
+• An NFC tag on my bed that when tapped will turn the lights off, or keep some in night mode if I have guests.
+• When my phone connects to the Wi-Fi, and it’s between sunrise and sunset, my entry hall light is turned on.
+
+VB.NET Sample Code
+only 3 lines of code to control the LimitlessLED lights.
+You can use this in PowerPoint, Word, Excel, MS Access, Visual Basic apps:
+
+
+'Connect to LimitlessLED Wifi Bridge Receiver
+Dim udpClient As New System.Net.Sockets.UdpClient("192.168.1.100", 50000)
+
+'Send hex command 38 which is "Turn Group1 LED lights ON" yes it remembers the last brightness and color, each LED contains a memory chip.
+udpClient.Send(New Byte() {&H38, &H0, &H55}, 3)
+'ToDo: send as many different commands here as you like, just change the number above where you see &H38
+
+'Close Connection
+udpClient.Close()
+
+
+Here is the latest opensource code for interacting with the LimitlessLED smartbulbs. Speaking with the smartthings team, they will be allowing UDP commands for devices such as LimitlessLED wifi bridges on the you home Local Area Network – exciting times ahead. You can view the latest code here https://github.com/jzGreen/ninja-limitlessLED/blob/master/lib/LimitlessLEDRGB.js
+
+LimitlessLED CommandSet
+Terms of Use: All content is copyright 2013 Limitless Designs LLC, Under no circimstances is this information to be reproduced, copied, nor distributed without written permission.
+Warning: reproduction of this information without written confirmation is an offense, and is strictly enforced.
+If this information is used in your programming files then you must reference the limitlessLED dev webpage using the following Text:
+
+// Source: http://www.limitlessled.com/dev
+// Copyright (2013) Limitless Designs LLC
+// If these codes are copied or utilized in any way, the LimitlessLED website link must remain attached.
+
+DETAILED DEVELOPER TECHNICAL SPECIFICATIONS
+Connect iPhone/iPad direct to WiFi Bridge Receiver: Yes (WiFi adhoc mode)
+Connect WiFi Bridge Receiver to LAN: Yes (WiFi infrastructure mode)
+
+IP Address: 192.168.1.100 (editable)
+Port: 50000 (editable)
+TCP/IP Mode: UDP (udp is what online games use, it is very fast and has the lowest latency)
+Username: admin (editable)
+Password: 000000 (editable)
+
+RGB COLOR LimitlessLED WIFI TCP/IP UDP COMMANDS
+All UDP Commands are 3 Bytes. First byte is from the list below, plus a fixed 2 byte suffix of 0×00 (decimal: 0) and 0×55 (decimal: 85)
+i.e. to turn all RGB COLOR LimitlessLED Smart lights to ON then send the TCP/IP UDP packet of: 0×22 0×00 0×55
+
+
+
+
+	            Hexidecimal (byte)	Decimal (integer)
+
+RGB COLOR LED ALL OFF	   0x21	           33
+
+RGB COLOR LED ALL ON	   0x22	           34
+
+BRIGHTNESS UP	           0x23	           35
+
+BRIGHTNESS DOWN	           0x24	           36
+
+DISCO SPEED FASTER	   0x25	           37    (SYNC/PAIR RGB Bulb within 2 seconds of Wall Switch Power being turned ON)
+
+DISCO SPEED SLOWER	   0x26	           38
+
+DISCO MODE NEXT	           0x27	           39
+
+DISCO MODE PREVIOUS	   0x28	           40
+
+
+COLOR SETTING is by a 3BYTE COMMAND:
+Byte1: 0×20
+Byte2: 0×00 to 0xFF
+Byte3: Always 0×55 (decimal: 85)
+
+WARM WHITE/COOL WHITE LimitlessLED Smartbulb WIFI TCP/IP UDP COMMANDS
+
+
+
+	Hexidecimal (byte)	Decimal (integer)
+
+WHITE LED ALL OFF	0x39	57
+
+WHITE LED ALL ON	0x35	53
+
+BRIGHTNESS UP		0x3C	60
+
+BRIGHTNESS DOWN		0x34	52
+
+WARM WHITE INCREASE	0x3E	62
+
+COOL WHITE INCREASE	0x3F	63
+
+GROUP 1 ALL ON		0x38	56
+
+GROUP 1 ALL OFF		0x3B	59
+
+GROUP 2 ALL ON		0x3D	61
+
+GROUP 2 ALL OFF		0x33	51
+
+GROUP 3 ALL ON		0x37	55
+
+GROUP 3 ALL OFF		0x3A	58
+
+GROUP 4 ALL ON		0x32	50
+
+GROUP 4 ALL OFF		0x36	54
+
+NIGHT MODE ALL		        0x39	100ms followed by:	0xB9
+
+NIGHT SAVER MODE GROUP 1	0x3B	100ms followed by:	0xBB
+
+NIGHT SAVER MODE GROUP 2	0x33	100ms followed by:	0xB3
+
+NIGHT SAVER MODE GROUP 3	0x3A	100ms followed by:	0xBA
+
+NIGHT SAVER MODE GROUP 4	0x36	100ms followed by:	0xB6
+
+FULL BRIGHTNESS ALL		0x35	100ms followed by:	0xB5
+
+FULL BRIGHTNESS GROUP 1		0x38	100ms followed by:	0xB8
+
+FULL BRIGHTNESS GROUP 2		0x3D	100ms followed by:	0xBD
+
+FULL BRIGHTNESS GROUP 3		0x37	100ms followed by:	0xB7
+
+FULL BRIGHTNESS GROUP 4		0x32	100ms followed by:	0xB2
+
+
+Microsoft C#.NET example Code
+
+//Connect to LimitlessLED Wifi Bridge Receiver
+System.Net.Sockets.UdpClient udpClient = new System.Net.Sockets.UdpClient("192.168.1.100", 50000);
+
+//Send hex command 38 which is "Turn Group1 LED lights ON" yes it remembers the last brightness and color, each LED contains a memory chip.
+udpClient.Send(new byte[] {
+0x38,
+0x0,
+0x55
+}, 3);
+//ToDo: send as many different commands here as you like, just change the number above where you see &H38
+
+//Close Connection
+udpClient.Close();
+
+Example SourceCode for iPhone/iPad:
+
+include cocoaasyncsocket AsyncUdpSocket.m
+//Connect to WiFi Bridge Receiver
+AsyncUdpSocket *socket;
+[socket sendData:packet toHost:@"192.168.1.100" port:50000 withTimeout:-1 tag:1];
+
+Example SourceCode for Android
+Source: Victor Murphy (Android opensource remote control apps)
+
+final String msg = text;
+new Thread(new Runnable() {
+public void run() {
+try {
+InetAddress serverAddr = InetAddress.getByName("192.168.1.100);
+DatagramSocket socket = new DatagramSocket();
+byte[] buf = (msg).getBytes();
+DatagramPacket packet = new DatagramPacket(buf, buf.length, serverAddr, 50000);
+socket.send(packet);
+socket.close();
+}
+catch (UnknownHostException e) {
+Toast.makeText(getApplicationContext(),e.toString(),Toast.LENGTH_SHORT).show();
+e.printStackTrace();
+} catch (SocketException e) {
+Toast.makeText(getApplicationContext(),e.toString(),Toast.LENGTH_SHORT).show();
+e.printStackTrace();
+} catch (IOException e) {
+Toast.makeText(getApplicationContext(),e.toString(),Toast.LENGTH_SHORT).show();
+e.printStackTrace();
+}
+}
+}).start();
+}
+
+Example SourceCode for Windows Phone 7
+See c#.net or vb.net above.
+
+Example Microsoft Excel 2005/2007/2010 VBA macro code
+
+'******************* FUNCTIONS USED BY LIMITLESSLED TO SEND TCP/IP UDP NETWORK COMMANDS USING EXCEL**********
+'*** Copyright (c) 2013 Limitless Designs LLC
+'*** More information available at www.limitlessled.com/dev
+
+Type WSAData
+wVersion As Integer
+wHighVersion As Integer
+szDescription(0 To 255) As Byte
+szSystemStatus(0 To 128) As Byte
+iMaxSockets As Integer
+iMaxUdpDg As Integer
+lpVendorInfo As Long
+End Type
+
+Type sockaddr_in
+sin_family As Integer
+sin_port As Integer
+sin_addr As Long
+sin_zero(0 To 7) As Byte
+End Type
+
+Public Declare Function WSAStartup Lib "ws2_32" (ByVal wVersionRequired As Integer, ByRef lpWSAData As WSAData) As Long
+Public Declare Function WSAGetLastError Lib "ws2_32" () As Long
+Public Declare Function socket Lib "ws2_32" (ByVal af As Long, ByVal socktype As Long, ByVal protocol As Long) As Long
+Public Declare Function connect Lib "ws2_32" (ByVal sock As Long, ByRef name As sockaddr_in, ByVal namelen As Integer) As Long
+Public Declare Function send Lib "ws2_32" (ByVal sock As Long, ByRef buf As Byte, ByVal bufLen As Long, ByVal flags As Long) As Long
+Public Declare Function recv Lib "ws2_32" (ByVal sock As Long, ByRef buf As Byte, ByVal bufLen As Long, ByVal flags As Long) As Long
+Public Declare Function inet_addr Lib "ws2_32" (ByVal s As String) As Long
+Public Declare Function htons Lib "ws2_32" (ByVal hostshort As Integer) As Integer
+Public Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+
+'RGB: LimitlessLED Full Colour Smartbulbs
+'WWCW: LimitlessLED Warm White/Cool White Smartbulbs
+'command list from www.limitlessled.com/dev/
+Enum LimitlessLEDCommand
+RGB_ALLOFF = &H21
+RGB_ALLON = &H22
+RGB_BRIGHTNESS_UP = &H23
+RGB_BRIGHTNESS_DOWN = &H24
+RGB_DISCO_SPEED_FASTER = &H25
+RGB_DISCO_SPEED_SLOWER = &H26
+RGB_DISCO_MODE_NEXT = &H27
+RGB_DISCO_MODE_PREVIOUS = &H28
+RGB_SET_COLOR = &H20
+WHITE_ALLOFF = &H39
+WHITE_ALLON = &H35
+WHITE_BRIGHTNESS_UP = &H3C
+WHITE_BRIGHTNESS_DOWN = &H34
+WHITE_WARM_WHITE_INCREASE = &H3E
+WHITE_COOL_WHITE_INCREASE = &H3F
+WHITE_GROUP_1_ALL_ON = &H38
+WHITE_GROUP_1_ALL_OFF = &H3B
+WHITE_GROUP_2_ALL_ON = &H3D
+WHITE_GROUP_2_ALL_OFF = &H33
+WHITE_GROUP_3_ALL_ON = &H37
+WHITE_GROUP_3_ALL_OFF = &H3A
+WHITE_GROUP_4_ALL_ON = &H32
+WHITE_GROUP_4_ALL_OFF = &H36
+WHITE_NIGHT_MODE_ALL = &H39 '100ms followed by: 0xB9
+WHITE_NIGHT_MODE_ALL_PRESSAndHOLD = &HBB
+WHITE_NIGHT_SAVER_MODE_GROUP_1 = &H3B '100ms followed by: 0xBB
+WHITE_NIGHT_SAVER_MODE_GROUP_1_PRESSAndHOLD = &HBB
+WHITE_NIGHT_SAVER_MODE_GROUP_2 = &H33 '100ms followed by: 0xB3
+WHITE_NIGHT_SAVER_MODE_GROUP_2_PRESSAndHOLD = &HB3
+WHITE_NIGHT_SAVER_MODE_GROUP_3 = &H3A '100ms followed by: 0xBA
+WHITE_NIGHT_SAVER_MODE_GROUP_3_PRESSAndHOLD = &HBA
+WHITE_NIGHT_SAVER_MODE_GROUP_4 = &H36 '100ms followed by: 0xB6
+WHITE_NIGHT_SAVER_MODE_GROUP_4_PRESSAndHOLD = &HB6
+WHITE_FULL_BRIGHTNESS_ALL = &H35 '100ms followed by: 0xB5
+WHITE_FULL_BRIGHTNESS_ALL_PRESSAndHOLD = &HB5
+WHITE_FULL_BRIGHTNESS_GROUP_1 = &H38 '100ms followed by: 0xB8
+WHITE_FULL_BRIGHTNESS_GROUP_1_PRESSAndHOLD = &HB8
+WHITE_FULL_BRIGHTNESS_GROUP_2 = &H3D '100ms followed by: 0xBD
+WHITE_FULL_BRIGHTNESS_GROUP_2_PRESSAndHOLD = &HBD
+WHITE_FULL_BRIGHTNESS_GROUP_3 = &H37 '100ms followed by: 0xB7
+WHITE_FULL_BRIGHTNESS_GROUP_3_PRESSAndHOLD = &HB7
+WHITE_FULL_BRIGHTNESS_GROUP_4 = &H32 '100ms followed by: 0xB2
+WHITE_FULL_BRIGHTNESS_GROUP_4_PRESSAndHOLD = &HB2
+End Enum
+
+Sub SendLimitlessLEDCommand(cmd As LimitlessLEDCommand, Optional color As Integer)
+
+'Start Windows Winsock
+Dim iReturn As Long
+Dim wsaDat As WSAData
+iReturn = WSAStartup(&H202, wsaDat)
+
+If iReturn <> 0 Then
+MsgBox "WSAStartup failed", 0, ""
+Exit Sub
+End If
+
+Dim sock As Long
+Dim sock1 As Long
+Dim lasterr As Long
+Dim i As Long
+Dim buf(10) As Byte
+Dim s As String
+Dim j As Integer
+Dim command(2) As Byte
+
+'http://msdn.microsoft.com/en-us/library/ms740506%28v=vs.85%29.aspx
+'sock = socket(2, 1, 6) 'TCP
+sock = socket(2, 2, 17) 'use UDP command
+
+Dim addr As sockaddr_in
+addr.sin_family = 2 'IPv4
+addr.sin_port = htons(50000) 'Default is Port 50000
+addr.sin_addr = inet_addr("192.168.1.100") 'LimitlesLED Wifi UDP Receiver Bridge IP Address
+i = connect(sock, addr, LenB(addr)) 'Connect to Wifi Bridge
+
+'*** Set up the UDP packet to command the lights:
+
+'1st Byte is for the command
+command(0) = cmd 'command list from www.limitlessled.com/dev/
+
+'2nd byte is for the color number (when necessary, otherwise it is zero)
+If cmd = &H20 Then 'if command is 0x20 then a color number is also required
+command(1) = color
+Else
+command(1) = &H0
+End If
+
+'3rd byte is always 0x55
+command(2) = &H55 'check byte
+
+'Now SEND the command to the lights
+i = send(sock, command(0), 3, 0)
+
+End Sub
+
+'Sleep (100) ' Waits for 100 milliseconds
+
+Sub White_ON()
+SendLimitlessLEDCommand WHITE_ALLON
+End Sub
+
+Sub White_OFF()
+SendLimitlessLEDCommand WHITE_ALLOFF
+End Sub
+
+Sub Group1_ON()
+SendLimitlessLEDCommand WHITE_GROUP_1_ALL_ON
+End Sub
+
+Sub Group2_ON()
+SendLimitlessLEDCommand WHITE_GROUP_2_ALL_ON
+End Sub
+
+Sub Group3_ON()
+SendLimitlessLEDCommand WHITE_GROUP_3_ALL_ON
+End Sub
+
+Sub Group4_ON()
+SendLimitlessLEDCommand WHITE_GROUP_4_ALL_ON
+End Sub
+
+Sub Group1_OFF()
+SendLimitlessLEDCommand WHITE_GROUP_1_ALL_OFF
+End Sub
+
+Sub Group2_OFF()
+SendLimitlessLEDCommand WHITE_GROUP_2_ALL_OFF
+End Sub
+
+Sub Group3_OFF()
+SendLimitlessLEDCommand WHITE_GROUP_3_ALL_OFF
+End Sub
+
+Sub Group4_OFF()
+SendLimitlessLEDCommand WHITE_GROUP_4_ALL_OFF
+End Sub
+
+Sub White_IncreaseCoolWhite()
+SendLimitlessLEDCommand WHITE_COOL_WHITE_INCREASE
+End Sub
+
+Sub White_IncreaseBrightness()
+SendLimitlessLEDCommand WHITE_BRIGHTNESS_UP
+End Sub
+
+Sub White_DecreaseBrightness()
+SendLimitlessLEDCommand WHITE_BRIGHTNESS_DOWN
+End Sub
+
+Sub White_IncreaseWarmWhite()
+SendLimitlessLEDCommand WHITE_WARM_WHITE_INCREASE
+End Sub
+
+
+Example of Linux control
+written by shaun:
+http://smileytechadventures.blogspot.co.nz/2013/07/control-limitless-led-from-linux-bash.html
+
+#!/bin/bash
+
+if [ -z "$1" ] ; then
+echo “You must enter a parameter: ”
+echo ” e.g. $0 allon”
+exit 1
+fi
+
+incmd=”$1?
+ipaddress=”192.168.0.201?
+portnum=”50000?
+
+allon=”\x35\00\x55?
+alloff=”\x39\00\x55?
+zone1on=”\x38\00\x55?
+zone1off=”\x3B\00\x55?
+zone2on=”\x3D\00\x55?
+zone2off=”\x33\00\x55?
+zone3on=”\x37\00\x55?
+zone3off=”\x3A\00\x55?
+zone4on=”\x32\00\x55?
+zone4off=”\x36\00\x55?
+
+eval incmd=\$$incmd
+
+echo -n -e “$incmd” >/dev/udp/”$ipaddress”/”$portnum”
+
+This takes the command line arguments, parsing it indirectly, and then passing the contents of that to the echo command to be sent directly to the linux UDP device file, which transmits the UDP commands to the wifi bridge. Your lights should already be synced to the wifi bridge first using the app.
+
+Example of Python code
+credits to: justakid from Australia.
+credits to: http://wiki.python.org/moin/UdpCommunication.
+
+
+import socket
+
+UDP_IP = "192.168.1.11" #this is the IP of the wifi bridge
+UDP_PORT = 50000
+
+MESSAGE1 = "\x39\x00\x55" #this turns all lights off
+
+print "UDP target IP:", UDP_IP #don't really need this
+print "UDP target port:", UDP_PORT #don't really need this
+print "message:", MESSAGE1 #don't really need this
+
+sock = socket.socket(socket.AF_INET,
+socket.SOCK_DGRAM)
+sock.sendto(MESSAGE1, (UDP_IP, UDP_PORT))
+
+Summary of Codes (send all 3 hex commands via port 50000 UDP to ip address of the wifi bridge receiver)
+LimitlessLED White
+------------------
+35 00 55 - All On
+39 00 55 - All Off
+3C 00 55 - Brightness Up
+34 00 55 - Brightness Down (There are ten steps between min and max)
+3E 00 55 - Warmer
+3F 00 55 - Cooler (There are ten steps between warmest and coolest)
+38 00 55 - Zone 1 On
+3B 00 55 - Zone 1 Off
+3D 00 55 - Zone 2 On
+33 00 55 - Zone 2 Off
+37 00 55 - Zone 3 On
+3A 00 55 - Zone 3 Off
+32 00 55 - Zone 4 On
+36 00 55 - Zone 4 Off
+B5 00 55 - All On Full (Send >=100ms after All On)
+B8 00 55 - Zone 1 Full (Send >=100ms after Zone 1 On)
+BD 00 55 - Zone 2 Full (Send >=100ms after Zone 2 On)
+B7 00 55 - Zone 3 Full (Send >=100ms after Zone 3 On)
+B2 00 55 - Zone 4 Full (Send >=100ms after Zone 4 On)
+B9 00 55 - All Nightlight (Send >=100ms after All Off)
+BB 00 55 - Zone 1 Nightlight (Send >=100ms after Zone 1 Off)
+B3 00 55 - Zone 2 Nightlight (Send >=100ms after Zone 2 Off)
+BA 00 55 - Zone 3 Nightlight (Send >=100ms after Zone 3 Off)
+B6 00 55 - Zone 4 Nightlight (Send >=100ms after Zone 4 Off)
+
+LimitlessLED RGB
+------------------
+22 00 55 - Lamps On
+21 00 55 - Lamps Off
+23 00 55 - Brightness Up
+24 00 55 - Brightness Down (There are nine steps between min and max)
+27 00 55 - Mode Up
+28 00 55 - Mode Down (There are 20 modes. The lowest is constant white)
+25 00 55 - Speed Up (Fast)
+26 00 55 - Speed Down (Slow)
+20 xx 55 - Set Colour to xx
