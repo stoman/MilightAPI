@@ -1,0 +1,111 @@
+package de.toman.milight;
+
+import java.awt.Color;
+
+/**
+ * This class extracts hue, saturation and brightness values from java.awt.Color
+ * instances and transforms them to values that can be sent to the Milight WiFi
+ * box.
+ * 
+ * @author Stefan Toman (toman@tum.de)
+ */
+public class MilightColor {
+	/**
+	 * The color the instance should represent.
+	 */
+	private Color color;
+
+	/**
+	 * Use this constructor to generate a new MilightColor representing a
+	 * specified color.
+	 * 
+	 * @param color
+	 *            is the colorthe new instance should represent
+	 */
+	public MilightColor(Color color) {
+		super();
+		this.color = color;
+	}
+
+	/**
+	 * This function returns the color the instance is representing.
+	 * 
+	 * @return is the color the instance is representing
+	 */
+	public Color getColor() {
+		return color;
+	}
+
+	/**
+	 * Use this function to set the color the instance is representing.
+	 * 
+	 * @param color
+	 *            is the color the instance should be representing
+	 */
+	public void setColor(Color color) {
+		this.color = color;
+	}
+
+	/**
+	 * This function extracts hue, saturation and brightness of the color the
+	 * instance is representing. The values are returned as an array of size 3,
+	 * each value is in the range betwen 0 and 1.
+	 * 
+	 * @return is an array consisting of the hue, saturation and brightness
+	 *         values (in this order). All values are given in a range between 0
+	 *         and 1
+	 * @see java.awt.Color#RGBtoHSB(int, int, int, float[])
+	 */
+	public float[] getHSB() {
+		return Color.RGBtoHSB(color.getRed(), color.getGreen(),
+				color.getBlue(), null);
+	}
+
+	/**
+	 * Extract the hue value from the color the instance is representing.
+	 * 
+	 * @return the hue value in a range between 0 and 1
+	 * @see java.awt.Color#RGBtoHSB(int, int, int, float[])
+	 */
+	public float getHue() {
+		return getHSB()[0];
+	}
+
+	/**
+	 * Extract the saturation value from the color the instance is representing.
+	 * 
+	 * @return the saturation value in a range between 0 and 1
+	 * @see java.awt.Color#RGBtoHSB(int, int, int, float[])
+	 */
+	public float getSaturation() {
+		return getHSB()[1];
+	}
+
+	/**
+	 * Extract the brightness value from the color the instance is representing.
+	 * 
+	 * @return the brightness value in a range between 0 and 1
+	 * @see java.awt.Color#RGBtoHSB(int, int, int, float[])
+	 */
+	public float getBrightness() {
+		return getHSB()[2];
+	}
+
+	/**
+	 * This function extracts the hue value from the color the instance is
+	 * representing and transforms it to a value that can be sent to the WiFi
+	 * box. Therefore a linear change on the scale between 0 and 1 is applied
+	 * setting 0 to 2/3, 1/3 to 1/3 and 2/3 to 0. Afterwards, the value is
+	 * scaled to a maximum of WiFiBox.MAX_COLOR.
+	 * 
+	 * @return the hue value to send to the WiFi box
+	 */
+	public int getMilightHue() {
+		// transform value by a linear change on the scale between 0 and 1
+		// setting 0 to 2/3, 1/3 to 1/3 and 2/3 to 0
+		float milightHue = (1f - (getHue() - 1 / 3f) + 1 / 3f) % 1f;
+
+		// scale the value
+		return (int) (milightHue * WiFiBox.MAX_COLOR);
+	}
+}

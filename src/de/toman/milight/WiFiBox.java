@@ -1,5 +1,6 @@
 package de.toman.milight;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -658,6 +659,32 @@ public class WiFiBox {
 		// send message to the WiFi box
 		sendMessage(COMMAND_COLOR, value);
 	}
+	
+	/**
+	 * Set the color value for the currently active group of lights (the
+	 * last one that was switched on).
+	 * 
+	 * @param color
+	 *            is the color to set
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	public void color(MilightColor color) throws IOException {
+		color(color.getMilightHue());
+	}
+
+	/**
+	 * Set the color value for the currently active group of lights (the
+	 * last one that was switched on).
+	 * 
+	 * @param color
+	 *            is the color to set
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	public void color(Color color) throws IOException {
+		color(new MilightColor(color));
+	}
 
 	/**
 	 * Set the color value for a given group of lights.
@@ -703,10 +730,44 @@ public class WiFiBox {
 					"The group number must be between 1 and 4");
 		}
 
-		// adjust brightness
+		// adjust color
 		messages[1] = padMessage(COMMAND_COLOR, value);
 
 		// send messages
 		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+	}
+	
+	/**
+	 * Set the color value for a given group of lights.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to set
+	 * @throws IOException
+	 *             if the message could not be sent
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void color(int group, MilightColor color) throws IOException,
+			IllegalArgumentException {
+		color(group, color.getMilightHue());
+	}
+
+	/**
+	 * Set the color value for a given group of lights.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to set
+	 * @throws IOException
+	 *             if the message could not be sent
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void color(int group, Color color) throws IOException,
+			IllegalArgumentException {
+		color(group, new MilightColor(color));
 	}
 }
