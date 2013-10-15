@@ -230,6 +230,28 @@ public class WiFiBox {
 	}
 
 	/**
+	 * Get the group of lights that is controlled by a given group number. The
+	 * Lights instance may be used to control the groups of lights individually
+	 * and mix different WiFi boxes.
+	 * 
+	 * @param group
+	 *            is the number of the group at the WiFi box (between 1 and 4)
+	 * @return the group of lights that is controled by the given group number
+	 * @throws IllegalArgumentException
+	 *             if the group number is not between 1 and 4
+	 */
+	public Lights getLights(int group) throws IllegalArgumentException {
+		// check group number
+		if (1 > group || group > 4) {
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+
+		// create new instance
+		return new Lights(this, group);
+	}
+
+	/**
 	 * This function sends an array of bytes to the WiFi box. The bytes should
 	 * be a valid command, i.e. the array's length should be three.
 	 * 
