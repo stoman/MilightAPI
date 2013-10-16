@@ -650,7 +650,7 @@ public class WiFiBox {
 		// check arguments
 		if (value < WiFiBox.MIN_BRIGHTNESS || value > MAX_BRIGHTNESS) {
 			throw new IllegalArgumentException(
-					"The brightness value should be between 0 and WiFiBox.MAX_BRIGHTNESS");
+					"The brightness value should be between WiFiBox.MIN_BRIGHTNESS and WiFiBox.MAX_BRIGHTNESS");
 		}
 
 		// create message array
