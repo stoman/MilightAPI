@@ -266,7 +266,7 @@ public class WiFiBox {
 		byte[] paddedMessage = { (byte) message1, (byte) message2, 0x55 & 0x55 };
 		return paddedMessage;
 	}
-
+	
 	/**
 	 * This function sends an one-byte control message to the WiFi box. The
 	 * message is padded with 0x00 0x55 as given in the documentation.
@@ -782,5 +782,85 @@ public class WiFiBox {
 	public void color(int group, Color color) throws IOException,
 			IllegalArgumentException {
 		color(group, new MilightColor(color));
+	}
+
+	/**
+	 * Set the color and brightness values for the currently active group of
+	 * lights (the last one that was switched on). Both values are extracted
+	 * from the color given to the function by transforming it to an HSB color.
+	 * 
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 */
+	public void colorAndBrightness(MilightColor color) {
+		// create message array
+		byte[][] messages = new byte[2][3];
+
+		// adjust color
+		messages[0] = padMessage(COMMAND_COLOR, color.getMilightHue());
+
+		// adjust brightness
+		messages[1] = padMessage(COMMAND_BRIGHTNESS,
+				color.getMilightBrightness());
+
+		// send messages
+		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+	}
+
+	/**
+	 * Set the color and brightness values for the currently active group of
+	 * lights (the last one that was switched on). Both values are extracted
+	 * from the color given to the function by transforming it to an HSB color.
+	 * 
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 */
+	public void colorAndBrightness(Color color) {
+		colorAndBrightness(new MilightColor(color));
+	}
+
+	/**
+	 * Set the color and brightness values for a given group of lights. Both values are extracted
+	 * from the color given to the function by transforming it to an HSB color.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void colorAndBrightness(int group, MilightColor color) {
+		// create message array
+		byte[][] messages = new byte[3][3];
+
+		// switch on first
+		switch (group) {
+		case 1:
+			messages[0] = padMessage(COMMAND_GROUP_1_ON);
+			break;
+		case 2:
+			messages[0] = padMessage(COMMAND_GROUP_2_ON);
+			break;
+		case 3:
+			messages[0] = padMessage(COMMAND_GROUP_3_ON);
+			break;
+		case 4:
+			messages[0] = padMessage(COMMAND_GROUP_4_ON);
+			break;
+		default:
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+
+		// adjust color
+		messages[1] = padMessage(COMMAND_COLOR, color.getMilightHue());
+
+		// adjust brightness
+		messages[2] = padMessage(COMMAND_BRIGHTNESS,
+				color.getMilightBrightness());
+
+		// send messages
+		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
 	}
 }

@@ -144,4 +144,18 @@ public class MilightColor {
 		// scale the value
 		return (int) (milightHue * MAX_COLOR);
 	}
+
+	/**
+	 * This function extracts the brightness value from the color the instance
+	 * is representing and transforms it to a value that can be sent to the WiFi
+	 * box. Therefore the value is scaled to a scale between
+	 * MilightColor.MIN_BRIGHTNESS and MilightColor.MAX_BRIGHTNESS.
+	 * 
+	 * @return the brightness value to send to the WiFi box
+	 */
+	public int getMilightBrightness() {
+		// scale the value
+		return MIN_BRIGHTNESS
+				+ (int) (getBrightness() * (MAX_BRIGHTNESS - MIN_BRIGHTNESS));
+	}
 }
