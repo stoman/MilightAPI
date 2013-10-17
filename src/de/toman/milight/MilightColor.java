@@ -16,6 +16,42 @@ public class MilightColor {
 	private Color color;
 
 	/**
+	 * The minimum color value to send to the WiFi box.
+	 */
+	public static final int MIN_COLOR = 0x00;
+
+	/**
+	 * The maximum color value to send to the WiFi box.
+	 */
+	public static final int MAX_COLOR = 0xFF;
+
+	/**
+	 * The minimum brightness value to send to the WiFi box.
+	 * 
+	 * The documentation of the
+	 * "LimitlessLED Technical Developer Opensource API" mentions that
+	 * brightness values should be between 0x00 and 0x3B. However, in practice
+	 * this does not hold. All available brightness levels are between 0x02 and
+	 * 0x1B, outside this interval some arguments don't change the light at all,
+	 * others give unexpected brightness values with the same result as the
+	 * values between 0x02 and 0x1B.
+	 */
+	public static final int MIN_BRIGHTNESS = 0x02;
+
+	/**
+	 * The maximum brightness value to send to the WiFi box.
+	 * 
+	 * The documentation of the
+	 * "LimitlessLED Technical Developer Opensource API" mentions that
+	 * brightness values should be between 0x00 and 0x3B. However, in practice
+	 * this does not hold. All available brightness levels are between 0x02 and
+	 * 0x1B, outside this interval some arguments don't change the light at all,
+	 * others give unexpected brightness values with the same result as the
+	 * values between 0x02 and 0x1B.
+	 */
+	public static final int MAX_BRIGHTNESS = 0x1B;
+
+	/**
 	 * Use this constructor to generate a new MilightColor representing a
 	 * specified color.
 	 * 
@@ -96,7 +132,7 @@ public class MilightColor {
 	 * representing and transforms it to a value that can be sent to the WiFi
 	 * box. Therefore a linear change on the scale between 0 and 1 is applied
 	 * setting 0 to 2/3, 1/3 to 1/3 and 2/3 to 0. Afterwards, the value is
-	 * scaled to a maximum of WiFiBox.MAX_COLOR.
+	 * scaled to a maximum of MilightColor.MAX_COLOR.
 	 * 
 	 * @return the hue value to send to the WiFi box
 	 */
@@ -106,6 +142,6 @@ public class MilightColor {
 		float milightHue = (1f - (getHue() - 1 / 3f) + 1 / 3f) % 1f;
 
 		// scale the value
-		return (int) (milightHue * WiFiBox.MAX_COLOR);
+		return (int) (milightHue * MAX_COLOR);
 	}
 }

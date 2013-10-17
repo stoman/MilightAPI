@@ -129,49 +129,13 @@ public class WiFiBox {
 	/**
 	 * The command code for "COLOR SETTING" (part of a two-byte command).
 	 */
+
 	public static final int COMMAND_COLOR = 0x40;
-
-	/**
-	 * The minimum color value to send to the WiFi box.
-	 */
-	public static final int MIN_COLOR = 0x00;
-
-	/**
-	 * The maximum color value to send to the WiFi box.
-	 */
-	public static final int MAX_COLOR = 0xFF;
-
 	/**
 	 * The command code for "DIRECT BRIGHTNESS SETTING" (part of a two-byte
 	 * command).
 	 */
 	public static final int COMMAND_BRIGHTNESS = 0x4E;
-
-	/**
-	 * The minimum brightness value to send to the WiFi box.
-	 * 
-	 * The documentation of the
-	 * "LimitlessLED Technical Developer Opensource API" mentions that
-	 * brightness values should be between 0x00 and 0x3B. However, in practice
-	 * this does not hold. All available brightness levels are between 0x02 and
-	 * 0x1B, outside this interval some arguments don't change the light at all,
-	 * others give unexpected brightness values with the same result as the
-	 * values between 0x02 and 0x1B.
-	 */
-	public static final int MIN_BRIGHTNESS = 0x02;
-
-	/**
-	 * The maximum brightness value to send to the WiFi box.
-	 * 
-	 * The documentation of the
-	 * "LimitlessLED Technical Developer Opensource API" mentions that
-	 * brightness values should be between 0x00 and 0x3B. However, in practice
-	 * this does not hold. All available brightness levels are between 0x02 and
-	 * 0x1B, outside this interval some arguments don't change the light at all,
-	 * others give unexpected brightness values with the same result as the
-	 * values between 0x02 and 0x1B.
-	 */
-	public static final int MAX_BRIGHTNESS = 0x1B;
 
 	/**
 	 * A constructor creating a new instance of the WiFi box class.
@@ -611,20 +575,21 @@ public class WiFiBox {
 	 * last one that was switched on).
 	 * 
 	 * @param value
-	 *            is the brightness value to set (between WiFiBox.MIN_BRIGHTNESS
-	 *            and WiFiBox.MAX_BRIGHTNESS)
+	 *            is the brightness value to set (between
+	 *            MilightColor.MIN_BRIGHTNESS and MilightColor.MAX_BRIGHTNESS)
 	 * @throws IOException
 	 *             if the message could not be sent
 	 * @throws IllegalArgumentException
-	 *             if the brightness value is not between WiFiBox.MIN_BRIGHTNESS
-	 *             and WiFiBox.MAX_BRIGHTNESS
+	 *             if the brightness value is not between
+	 *             MilightColor.MIN_BRIGHTNESS and MilightColor.MAX_BRIGHTNESS
 	 */
 	public void brightness(int value) throws IOException,
 			IllegalArgumentException {
 		// check argument
-		if (value < MIN_BRIGHTNESS || value > MAX_BRIGHTNESS) {
+		if (value < MilightColor.MIN_BRIGHTNESS
+				|| value > MilightColor.MAX_BRIGHTNESS) {
 			throw new IllegalArgumentException(
-					"The brightness value should be between WiFiBox.MIN_BRIGHTNESS and WiFiBox.MAX_BRIGHTNESS");
+					"The brightness value should be between MilightColor.MIN_BRIGHTNESS and MilightColor.MAX_BRIGHTNESS");
 		}
 
 		// send message to the WiFi box
@@ -637,20 +602,22 @@ public class WiFiBox {
 	 * @param group
 	 *            is the number of the group to set the brightness for
 	 * @param value
-	 *            is the brightness value to set (between WiFiBox.MIN_BRIGHTNESS
-	 *            and WiFiBox.MAX_BRIGHTNESS)
+	 *            is the brightness value to set (between
+	 *            MilightColor.MIN_BRIGHTNESS and MilightColor.MAX_BRIGHTNESS)
 	 * @throws IOException
 	 *             if the message could not be sent
 	 * @throws IllegalArgumentException
 	 *             if group is not between 1 and 4 or the brightness value is
-	 *             not between WiFiBox.MIN_BRIGHTNESS and WiFiBox.MAX_BRIGHTNESS
+	 *             not between MilightColor.MIN_BRIGHTNESS and
+	 *             MilightColor.MAX_BRIGHTNESS
 	 */
 	public void brightness(int group, int value) throws IOException,
 			IllegalArgumentException {
 		// check arguments
-		if (value < WiFiBox.MIN_BRIGHTNESS || value > MAX_BRIGHTNESS) {
+		if (value < MilightColor.MIN_BRIGHTNESS
+				|| value > MilightColor.MAX_BRIGHTNESS) {
 			throw new IllegalArgumentException(
-					"The brightness value should be between WiFiBox.MIN_BRIGHTNESS and WiFiBox.MAX_BRIGHTNESS");
+					"The brightness value should be between MilightColor.MIN_BRIGHTNESS and MilightColor.MAX_BRIGHTNESS");
 		}
 
 		// create message array
@@ -687,19 +654,19 @@ public class WiFiBox {
 	 * one that was switched on).
 	 * 
 	 * @param value
-	 *            is the color value to set (between WiFiBox.MIN_COLOR and
-	 *            WiFiBox.MAX_COLOR)
+	 *            is the color value to set (between MilightColor.MIN_COLOR and
+	 *            MilightColor.MAX_COLOR)
 	 * @throws IOException
 	 *             if the message could not be sent
 	 * @throws IllegalArgumentException
-	 *             if the color value is not between WiFiBox.MIN_COLOR and
-	 *             WiFiBox.MAX_COLOR
+	 *             if the color value is not between MilightColor.MIN_COLOR and
+	 *             MilightColor.MAX_COLOR
 	 */
 	public void color(int value) throws IOException, IllegalArgumentException {
 		// check argument
-		if (value < MIN_COLOR || value > MAX_COLOR) {
+		if (value < MilightColor.MIN_COLOR || value > MilightColor.MAX_COLOR) {
 			throw new IllegalArgumentException(
-					"The color value should be between WiFiBox.MIN_COLOR and WiFiBox.MAX_COLOR");
+					"The color value should be between MilightColor.MIN_COLOR and MilightColor.MAX_COLOR");
 		}
 
 		// send message to the WiFi box
@@ -738,20 +705,20 @@ public class WiFiBox {
 	 * @param group
 	 *            is the number of the group to set the color for
 	 * @param value
-	 *            is the color value to set (between WiFiBox.MIN_COLOR and
-	 *            WiFiBox.MAX_COLOR)
+	 *            is the color value to set (between MilightColor.MIN_COLOR and
+	 *            MilightColor.MAX_COLOR)
 	 * @throws IOException
 	 *             if the message could not be sent
 	 * @throws IllegalArgumentException
 	 *             if group is not between 1 and 4 or the color value is not
-	 *             between WiFiBox.MIN_COLOR and WiFiBox.MAX_COLOR
+	 *             between MilightColor.MIN_COLOR and MilightColor.MAX_COLOR
 	 */
 	public void color(int group, int value) throws IOException,
 			IllegalArgumentException {
 		// check arguments
-		if (value < WiFiBox.MIN_COLOR || value > MAX_COLOR) {
+		if (value < MilightColor.MIN_COLOR || value > MilightColor.MAX_COLOR) {
 			throw new IllegalArgumentException(
-					"The color value should be between WiFiBox.MIN_COLOR and WiFiBox.MAX_COLOR");
+					"The color value should be between MilightColor.MIN_COLOR and MilightColor.MAX_COLOR");
 		}
 
 		// create message array

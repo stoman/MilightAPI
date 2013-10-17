@@ -47,11 +47,11 @@ public class Timer implements Runnable {
 	 *            milliseconds
 	 * @param brightnessLevelStart
 	 *            is the brightness level to start with (between
-	 *            WiFiBox.MIN_BRIGHTNESS and WiFiBox.MAX_BRIGHTNESS)
+	 *            MilightColor.MIN_BRIGHTNESS and MilightColor.MAX_BRIGHTNESS)
 	 * @param brightnessLevelGoal
 	 *            is the brightness level the group of lights should have in the
-	 *            end (between WiFiBox.MIN_BRIGHTNESS and
-	 *            WiFiBox.MAX_BRIGHTNESS)
+	 *            end (between MilightColor.MIN_BRIGHTNESS and
+	 *            MilightColor.MAX_BRIGHTNESS)
 	 * @param switchOff
 	 *            is true if the lights should be switched off after the
 	 *            animation ends
@@ -59,8 +59,8 @@ public class Timer implements Runnable {
 	 *             if the message to the WiFi box could not be sent
 	 * @throws IllegalArgumentException
 	 *             if the brightness levels to start with or reach in the end
-	 *             are not between WiFiBox.MIN_BRIGHTNESS and
-	 *             WiFiBox.MAX_BRIGHTNESS
+	 *             are not between MilightColor.MIN_BRIGHTNESS and
+	 *             MilightColor.MAX_BRIGHTNESS
 	 */
 	public Timer(Lights lights, long time, int brightnessLevelStart,
 			int brightnessLevelGoal, boolean switchOff) throws IOException,
@@ -68,15 +68,15 @@ public class Timer implements Runnable {
 		super();
 
 		// check arguments
-		if (brightnessLevelStart < WiFiBox.MIN_BRIGHTNESS
-				|| brightnessLevelStart > WiFiBox.MAX_BRIGHTNESS) {
+		if (brightnessLevelStart < MilightColor.MIN_BRIGHTNESS
+				|| brightnessLevelStart > MilightColor.MAX_BRIGHTNESS) {
 			throw new IllegalArgumentException(
-					"The brightness level to start with should be between WiFiBox.MIN_BRIGHTNESS and WiFiBox.MAX_BRIGHTNESS");
+					"The brightness level to start with should be between MilightColor.MIN_BRIGHTNESS and MilightColor.MAX_BRIGHTNESS");
 		}
-		if (brightnessLevelGoal < WiFiBox.MIN_BRIGHTNESS
-				|| brightnessLevelGoal > WiFiBox.MAX_BRIGHTNESS) {
+		if (brightnessLevelGoal < MilightColor.MIN_BRIGHTNESS
+				|| brightnessLevelGoal > MilightColor.MAX_BRIGHTNESS) {
 			throw new IllegalArgumentException(
-					"The brightness level to reach in the end should be between WiFiBox.MIN_BRIGHTNESS and WiFiBox.MAX_BRIGHTNESS");
+					"The brightness level to reach in the end should be between MilightColor.MIN_BRIGHTNESS and MilightColor.MAX_BRIGHTNESS");
 		}
 
 		// set attributes
@@ -104,17 +104,17 @@ public class Timer implements Runnable {
 	 *            milliseconds
 	 * @param brightnessLevelStart
 	 *            is the brightness level to start with (between
-	 *            WiFiBox.MIN_BRIGHTNESS and WiFiBox.MAX_BRIGHTNESS)
+	 *            MilightColor.MIN_BRIGHTNESS and MilightColor.MAX_BRIGHTNESS)
 	 * @param brightnessLevelGoal
 	 *            is the brightness level the group of lights should have in the
-	 *            end (between WiFiBox.MIN_BRIGHTNESS and
-	 *            WiFiBox.MAX_BRIGHTNESS)
+	 *            end (between MilightColor.MIN_BRIGHTNESS and
+	 *            MilightColor.MAX_BRIGHTNESS)
 	 * @throws IOException
 	 *             if the message to the WiFi box could not be sent
 	 * @throws IllegalArgumentException
 	 *             if the brightness levels to start with or reach in the end
-	 *             are not between WiFiBox.MIN_BRIGHTNESS and
-	 *             WiFiBox.MAX_BRIGHTNESS
+	 *             are not between MilightColor.MIN_BRIGHTNESS and
+	 *             MilightColor.MAX_BRIGHTNESS
 	 */
 	public Timer(Lights lights, long time, int brightnessLevelStart,
 			int brightnessLevelGoal) throws IOException,
@@ -138,7 +138,8 @@ public class Timer implements Runnable {
 	 */
 	public Timer(Lights lights, long time) throws IOException,
 			IllegalArgumentException {
-		this(lights, time, WiFiBox.MAX_BRIGHTNESS, WiFiBox.MIN_BRIGHTNESS, true);
+		this(lights, time, MilightColor.MAX_BRIGHTNESS,
+				MilightColor.MIN_BRIGHTNESS, true);
 	}
 
 	/**
