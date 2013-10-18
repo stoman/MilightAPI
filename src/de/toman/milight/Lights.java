@@ -293,4 +293,26 @@ public class Lights {
 	public void color(Color color) throws IOException {
 		wifiBox.color(group, color);
 	}
+	
+	/**
+	 * Set the color and brightness values for the group of lights. Both values are extracted
+	 * from the color given to the function by transforming it to an HSB color.
+	 * 
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 */
+	public void colorAndBrightness(MilightColor color) {
+		wifiBox.colorAndBrightness(color);
+	}
+
+	/**
+	 * Set the color and brightness values for the group of lights. Both values are extracted
+	 * from the color given to the function by transforming it to an HSB color.
+	 * 
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 */
+	public void colorAndBrightness(Color color) {
+		wifiBox.colorAndBrightness(color);
+	}
 }
