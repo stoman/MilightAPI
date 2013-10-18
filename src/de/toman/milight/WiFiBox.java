@@ -266,7 +266,88 @@ public class WiFiBox {
 		byte[] paddedMessage = { (byte) message1, (byte) message2, 0x55 & 0x55 };
 		return paddedMessage;
 	}
-	
+
+	/**
+	 * This function constructs a three-byte command to switch on a given group
+	 * of lights. This array is ready to be sent to the WiFi box.
+	 * 
+	 * @param group
+	 *            is the group of lights to switch on
+	 * @throws IllegalArgumentException
+	 *             if the group number is not between 1 and 4
+	 * @return the message array to send to the WiFi box
+	 */
+	private byte[] getSwitchOnCommand(int group)
+			throws IllegalArgumentException {
+		switch (group) {
+		case 1:
+			return padMessage(COMMAND_GROUP_1_ON);
+		case 2:
+			return padMessage(COMMAND_GROUP_2_ON);
+		case 3:
+			return padMessage(COMMAND_GROUP_3_ON);
+		case 4:
+			return padMessage(COMMAND_GROUP_4_ON);
+		default:
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+	}
+
+	/**
+	 * This function constructs a three-byte command to switch off a given group
+	 * of lights. This array is ready to be sent to the WiFi box.
+	 * 
+	 * @param group
+	 *            is the group of lights to switch off
+	 * @throws IllegalArgumentException
+	 *             if the group number is not between 1 and 4
+	 * @return the message array to send to the WiFi box
+	 */
+	private byte[] getSwitchOffCommand(int group)
+			throws IllegalArgumentException {
+		switch (group) {
+		case 1:
+			return padMessage(COMMAND_GROUP_1_OFF);
+		case 2:
+			return padMessage(COMMAND_GROUP_2_OFF);
+		case 3:
+			return padMessage(COMMAND_GROUP_3_OFF);
+		case 4:
+			return padMessage(COMMAND_GROUP_4_OFF);
+		default:
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+	}
+
+	/**
+	 * This function constructs a three-byte command to switch a given group of
+	 * lights to the white mode. This array is ready to be sent to the WiFi box.
+	 * 
+	 * @param group
+	 *            is the group of lights to switch to the white mode
+	 * @throws IllegalArgumentException
+	 *             if the group number is not between 1 and 4
+	 * @return the message array to send to the WiFi box
+	 */
+	private byte[] getWhiteModeCommand(int group)
+			throws IllegalArgumentException {
+		switch (group) {
+		case 1:
+			return padMessage(COMMAND_GROUP_1_WHITE);
+		case 2:
+			return padMessage(COMMAND_GROUP_2_WHITE);
+		case 3:
+			return padMessage(COMMAND_GROUP_3_WHITE);
+		case 4:
+			return padMessage(COMMAND_GROUP_4_WHITE);
+		default:
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+	}
+
 	/**
 	 * This function sends an one-byte control message to the WiFi box. The
 	 * message is padded with 0x00 0x55 as given in the documentation.
@@ -390,23 +471,7 @@ public class WiFiBox {
 	 *             if the group number is not between 1 and 4
 	 */
 	public void off(int group) throws IOException, IllegalArgumentException {
-		switch (group) {
-		case 1:
-			sendMessage(COMMAND_GROUP_1_OFF);
-			break;
-		case 2:
-			sendMessage(COMMAND_GROUP_2_OFF);
-			break;
-		case 3:
-			sendMessage(COMMAND_GROUP_3_OFF);
-			break;
-		case 4:
-			sendMessage(COMMAND_GROUP_4_OFF);
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"The group number must be between 1 and 4");
-		}
+		sendMessage(getSwitchOffCommand(group));
 	}
 
 	/**
@@ -430,23 +495,7 @@ public class WiFiBox {
 	 *             if the group number is not between 1 and 4
 	 */
 	public void on(int group) throws IOException, IllegalArgumentException {
-		switch (group) {
-		case 1:
-			sendMessage(COMMAND_GROUP_1_ON);
-			break;
-		case 2:
-			sendMessage(COMMAND_GROUP_2_ON);
-			break;
-		case 3:
-			sendMessage(COMMAND_GROUP_3_ON);
-			break;
-		case 4:
-			sendMessage(COMMAND_GROUP_4_ON);
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"The group number must be between 1 and 4");
-		}
+		sendMessage(getSwitchOnCommand(group));
 	}
 
 	/**
@@ -473,28 +522,13 @@ public class WiFiBox {
 	 */
 	public void white(int group) throws IllegalArgumentException {
 		// create message array
-		int[] messages = new int[2];
-		switch (group) {
-		case 1:
-			messages[0] = COMMAND_GROUP_1_ON;
-			messages[1] = COMMAND_GROUP_1_WHITE;
-			break;
-		case 2:
-			messages[0] = COMMAND_GROUP_2_ON;
-			messages[1] = COMMAND_GROUP_2_WHITE;
-			break;
-		case 3:
-			messages[0] = COMMAND_GROUP_3_ON;
-			messages[1] = COMMAND_GROUP_3_WHITE;
-			break;
-		case 4:
-			messages[0] = COMMAND_GROUP_4_ON;
-			messages[1] = COMMAND_GROUP_4_WHITE;
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"The group number must be between 1 and 4");
-		}
+		byte[][] messages = new byte[2][3];
+
+		// switch on first
+		messages[0] = getSwitchOnCommand(group);
+
+		// switch to white mode
+		messages[1] = getWhiteModeCommand(group);
 
 		// send messages
 		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
@@ -525,24 +559,13 @@ public class WiFiBox {
 	 */
 	public void discoMode(int group) throws IllegalArgumentException {
 		// create message array
-		int[] messages = { 0, COMMAND_DISCO };
-		switch (group) {
-		case 1:
-			messages[0] = COMMAND_GROUP_1_ON;
-			break;
-		case 2:
-			messages[0] = COMMAND_GROUP_2_ON;
-			break;
-		case 3:
-			messages[0] = COMMAND_GROUP_3_ON;
-			break;
-		case 4:
-			messages[0] = COMMAND_GROUP_4_ON;
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"The group number must be between 1 and 4");
-		}
+		byte[][] messages = new byte[2][3];
+
+		// switch on first
+		messages[0] = getSwitchOnCommand(group);
+
+		// start disco mode
+		messages[1] = padMessage(COMMAND_DISCO);
 
 		// send messages
 		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
@@ -624,23 +647,7 @@ public class WiFiBox {
 		byte[][] messages = new byte[2][3];
 
 		// switch on first
-		switch (group) {
-		case 1:
-			messages[0] = padMessage(COMMAND_GROUP_1_ON);
-			break;
-		case 2:
-			messages[0] = padMessage(COMMAND_GROUP_2_ON);
-			break;
-		case 3:
-			messages[0] = padMessage(COMMAND_GROUP_3_ON);
-			break;
-		case 4:
-			messages[0] = padMessage(COMMAND_GROUP_4_ON);
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"The group number must be between 1 and 4");
-		}
+		messages[0] = getSwitchOnCommand(group);
 
 		// adjust brightness
 		messages[1] = padMessage(COMMAND_BRIGHTNESS, value);
@@ -725,23 +732,7 @@ public class WiFiBox {
 		byte[][] messages = new byte[2][3];
 
 		// switch on first
-		switch (group) {
-		case 1:
-			messages[0] = padMessage(COMMAND_GROUP_1_ON);
-			break;
-		case 2:
-			messages[0] = padMessage(COMMAND_GROUP_2_ON);
-			break;
-		case 3:
-			messages[0] = padMessage(COMMAND_GROUP_3_ON);
-			break;
-		case 4:
-			messages[0] = padMessage(COMMAND_GROUP_4_ON);
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"The group number must be between 1 and 4");
-		}
+		messages[0] = getSwitchOnCommand(group);
 
 		// adjust color
 		messages[1] = padMessage(COMMAND_COLOR, value);
@@ -820,8 +811,9 @@ public class WiFiBox {
 	}
 
 	/**
-	 * Set the color and brightness values for a given group of lights. Both values are extracted
-	 * from the color given to the function by transforming it to an HSB color.
+	 * Set the color and brightness values for a given group of lights. Both
+	 * values are extracted from the color given to the function by transforming
+	 * it to an HSB color.
 	 * 
 	 * @param group
 	 *            is the number of the group to set the color for
@@ -835,23 +827,7 @@ public class WiFiBox {
 		byte[][] messages = new byte[3][3];
 
 		// switch on first
-		switch (group) {
-		case 1:
-			messages[0] = padMessage(COMMAND_GROUP_1_ON);
-			break;
-		case 2:
-			messages[0] = padMessage(COMMAND_GROUP_2_ON);
-			break;
-		case 3:
-			messages[0] = padMessage(COMMAND_GROUP_3_ON);
-			break;
-		case 4:
-			messages[0] = padMessage(COMMAND_GROUP_4_ON);
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"The group number must be between 1 and 4");
-		}
+		messages[0] = getSwitchOnCommand(group);
 
 		// adjust color
 		messages[1] = padMessage(COMMAND_COLOR, color.getMilightHue());
