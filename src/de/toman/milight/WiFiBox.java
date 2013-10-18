@@ -33,7 +33,7 @@ public class WiFiBox {
 	 * The sleep time between both messages for switching lights to the white
 	 * mode.
 	 */
-	public static final int DEFAULT_SLEEP_BETWEEN_MESSAGES = 100;
+	public static final int MIN_SLEEP_BETWEEN_MESSAGES = 100;
 
 	/**
 	 * The command code for "RGBW COLOR LED ALL OFF".
@@ -506,7 +506,7 @@ public class WiFiBox {
 	 */
 	public void white() {
 		int[] messages = { COMMAND_ALL_ON, COMMAND_ALL_WHITE };
-		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
 	}
 
 	/**
@@ -531,7 +531,7 @@ public class WiFiBox {
 		messages[1] = getWhiteModeCommand(group);
 
 		// send messages
-		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
 	}
 
 	/**
@@ -568,7 +568,7 @@ public class WiFiBox {
 		messages[1] = padMessage(COMMAND_DISCO);
 
 		// send messages
-		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
 	}
 
 	/**
@@ -653,7 +653,7 @@ public class WiFiBox {
 		messages[1] = padMessage(COMMAND_BRIGHTNESS, value);
 
 		// send messages
-		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
 	}
 
 	/**
@@ -738,7 +738,7 @@ public class WiFiBox {
 		messages[1] = padMessage(COMMAND_COLOR, value);
 
 		// send messages
-		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
 	}
 
 	/**
@@ -795,7 +795,7 @@ public class WiFiBox {
 				color.getMilightBrightness());
 
 		// send messages
-		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
 	}
 
 	/**
@@ -837,6 +837,6 @@ public class WiFiBox {
 				color.getMilightBrightness());
 
 		// send messages
-		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
 	}
 }

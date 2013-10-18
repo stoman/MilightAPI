@@ -2,6 +2,16 @@ package de.toman.milight;
 
 import java.io.IOException;
 
+/**
+ * This class dims a group of lights over time from one brightness level to
+ * another in a smooth way. It supports the brightness value to get bigger or
+ * smaller and can switch the lights of in the end of the animation. The
+ * animation can run over a long time and is carried out in a seperate thread.
+ * Use the {@link Timer#start()} function to run this class in a seperate
+ * thread.
+ * 
+ * @author Stefan Toman (toman@tum.de)
+ */
 public class Timer implements Runnable {
 	/**
 	 * The lights that should be controlled.
