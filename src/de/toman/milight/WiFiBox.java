@@ -349,6 +349,29 @@ public class WiFiBox {
 	}
 
 	/**
+	 * This function constructs a three-byte command to change the hue of a
+	 * light to a given color
+	 * 
+	 * @param value
+	 *            the color value (between MilightColor.MIN_COLOR and
+	 *            MilightColor.MAX_COLOR)
+	 * @throws IllegalArgumentException
+	 *             if the color value is not between MilightColor.MIN_COLOR and
+	 *             MilightColor.MAX_COLOR
+	 * @return the message array to send to the WiFi box
+	 */
+	private byte[] getColorCommand(int value) throws IllegalArgumentException {
+		// check argument
+		if (value < MilightColor.MIN_COLOR || value > MilightColor.MAX_COLOR) {
+			throw new IllegalArgumentException(
+					"The color value should be between MilightColor.MIN_COLOR and MilightColor.MAX_COLOR");
+		}
+
+		// send message to the WiFi box
+		return padMessage(COMMAND_COLOR, value);
+	}
+
+	/**
 	 * This function sends an one-byte control message to the WiFi box. The
 	 * message is padded with 0x00 0x55 as given in the documentation.
 	 * 
@@ -670,14 +693,8 @@ public class WiFiBox {
 	 *             MilightColor.MAX_COLOR
 	 */
 	public void color(int value) throws IOException, IllegalArgumentException {
-		// check argument
-		if (value < MilightColor.MIN_COLOR || value > MilightColor.MAX_COLOR) {
-			throw new IllegalArgumentException(
-					"The color value should be between MilightColor.MIN_COLOR and MilightColor.MAX_COLOR");
-		}
-
 		// send message to the WiFi box
-		sendMessage(COMMAND_COLOR, value);
+		sendMessage(getColorCommand(value));
 	}
 
 	/**
@@ -722,12 +739,6 @@ public class WiFiBox {
 	 */
 	public void color(int group, int value) throws IOException,
 			IllegalArgumentException {
-		// check arguments
-		if (value < MilightColor.MIN_COLOR || value > MilightColor.MAX_COLOR) {
-			throw new IllegalArgumentException(
-					"The color value should be between MilightColor.MIN_COLOR and MilightColor.MAX_COLOR");
-		}
-
 		// create message array
 		byte[][] messages = new byte[2][3];
 
@@ -735,7 +746,7 @@ public class WiFiBox {
 		messages[0] = getSwitchOnCommand(group);
 
 		// adjust color
-		messages[1] = padMessage(COMMAND_COLOR, value);
+		messages[1] = getColorCommand(value);
 
 		// send messages
 		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
@@ -788,7 +799,7 @@ public class WiFiBox {
 		byte[][] messages = new byte[2][3];
 
 		// adjust color
-		messages[0] = padMessage(COMMAND_COLOR, color.getMilightHue());
+		messages[0] = getColorCommand(color.getMilightHue());
 
 		// adjust brightness
 		messages[1] = padMessage(COMMAND_BRIGHTNESS,
@@ -830,7 +841,7 @@ public class WiFiBox {
 		messages[0] = getSwitchOnCommand(group);
 
 		// adjust color
-		messages[1] = padMessage(COMMAND_COLOR, color.getMilightHue());
+		messages[1] = getColorCommand(color.getMilightHue());
 
 		// adjust brightness
 		messages[2] = padMessage(COMMAND_BRIGHTNESS,
