@@ -275,6 +275,23 @@ public class Lights {
 	 * 
 	 * @param color
 	 *            is the color to set
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	public void color(MilightColor color, boolean forceColoredMode) throws IOException {
+		wifiBox.color(group, color, forceColoredMode);
+	}
+
+	/**
+	 * Set the color value for the group of lights. Colors with low saturation will be displayed in white
+	 * mode for a better result.
+	 * 
+	 * @param color
+	 *            is the color to set
 	 * @throws IOException
 	 *             if the message could not be sent
 	 */
@@ -284,6 +301,23 @@ public class Lights {
 
 	/**
 	 * Set the color value for the group of lights.
+	 * 
+	 * @param color
+	 *            is the color to set
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	public void color(Color color, boolean forceColoredMode) throws IOException {
+		wifiBox.color(group, color, forceColoredMode);
+	}
+
+	/**
+	 * Set the color value for the group of lights. Colors with low saturation will be displayed in white
+	 * mode for a better result.
 	 * 
 	 * @param color
 	 *            is the color to set
@@ -300,6 +334,22 @@ public class Lights {
 	 * 
 	 * @param color
 	 *            is the color to extract hue and brightness from
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
+	 */
+	public void colorAndBrightness(MilightColor color, boolean forceColoredMode) {
+		wifiBox.colorAndBrightness(group, color, forceColoredMode);
+	}
+
+	/**
+	 * Set the color and brightness values for the group of lights. Both values are extracted
+	 * from the color given to the function by transforming it to an HSB color. Colors with low saturation will be displayed in white
+	 * mode for a better result.
+	 * 
+	 * @param color
+	 *            is the color to extract hue and brightness from
 	 */
 	public void colorAndBrightness(MilightColor color) {
 		wifiBox.colorAndBrightness(color);
@@ -308,6 +358,22 @@ public class Lights {
 	/**
 	 * Set the color and brightness values for the group of lights. Both values are extracted
 	 * from the color given to the function by transforming it to an HSB color.
+	 * 
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
+	 */
+	public void colorAndBrightness(Color color, boolean forceColoredMode) {
+		wifiBox.colorAndBrightness(group, color, forceColoredMode);
+	}
+
+	/**
+	 * Set the color and brightness values for the group of lights. Both values are extracted
+	 * from the color given to the function by transforming it to an HSB color. Colors with low saturation will be displayed in white
+	 * mode for a better result.
 	 * 
 	 * @param color
 	 *            is the color to extract hue and brightness from

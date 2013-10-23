@@ -971,4 +971,42 @@ public class WiFiBox {
 	public void colorAndBrightness(int group, MilightColor color) {
 		colorAndBrightness(group, color, false);
 	}
+
+	/**
+	 * Set the color and brightness values for a given group of lights. Both
+	 * values are extracted from the color given to the function by transforming
+	 * it to an HSB color.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void colorAndBrightness(int group, Color color,
+			boolean forceColoredMode) {
+		colorAndBrightness(group, new MilightColor(color), forceColoredMode);
+	}
+
+	/**
+	 * Set the color and brightness values for a given group of lights. Both
+	 * values are extracted from the color given to the function by transforming
+	 * it to an HSB color. Colors with low saturation will be displayed in white
+	 * mode for a better result.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void colorAndBrightness(int group, Color color) {
+		colorAndBrightness(group, new MilightColor(color));
+	}
 }
