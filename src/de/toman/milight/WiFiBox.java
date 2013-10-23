@@ -349,6 +349,29 @@ public class WiFiBox {
 	}
 
 	/**
+	 * This function constructs a three-byte command to change the hue of a
+	 * light to a given color
+	 * 
+	 * @param value
+	 *            the color value (between MilightColor.MIN_COLOR and
+	 *            MilightColor.MAX_COLOR)
+	 * @throws IllegalArgumentException
+	 *             if the color value is not between MilightColor.MIN_COLOR and
+	 *             MilightColor.MAX_COLOR
+	 * @return the message array to send to the WiFi box
+	 */
+	private byte[] getColorCommand(int value) throws IllegalArgumentException {
+		// check argument
+		if (value < MilightColor.MIN_COLOR || value > MilightColor.MAX_COLOR) {
+			throw new IllegalArgumentException(
+					"The color value should be between MilightColor.MIN_COLOR and MilightColor.MAX_COLOR");
+		}
+
+		// send message to the WiFi box
+		return padMessage(COMMAND_COLOR, value);
+	}
+
+	/**
 	 * This function sends an one-byte control message to the WiFi box. The
 	 * message is padded with 0x00 0x55 as given in the documentation.
 	 * 
@@ -670,14 +693,8 @@ public class WiFiBox {
 	 *             MilightColor.MAX_COLOR
 	 */
 	public void color(int value) throws IOException, IllegalArgumentException {
-		// check argument
-		if (value < MilightColor.MIN_COLOR || value > MilightColor.MAX_COLOR) {
-			throw new IllegalArgumentException(
-					"The color value should be between MilightColor.MIN_COLOR and MilightColor.MAX_COLOR");
-		}
-
 		// send message to the WiFi box
-		sendMessage(COMMAND_COLOR, value);
+		sendMessage(getColorCommand(value));
 	}
 
 	/**
@@ -686,16 +703,59 @@ public class WiFiBox {
 	 * 
 	 * @param color
 	 *            is the color to set
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	public void color(MilightColor color, boolean forceColoredMode)
+			throws IOException {
+		if (color.isColoredMode() || forceColoredMode) {
+			// colored mode
+			color(color.getMilightHue());
+		} else {
+			// white mode
+			white();
+		}
+	}
+
+	/**
+	 * Set the color value for the currently active group of lights (the last
+	 * one that was switched on). Colors with low saturation will be displayed
+	 * in white mode for a better result.
+	 * 
+	 * @param color
+	 *            is the color to set
 	 * @throws IOException
 	 *             if the message could not be sent
 	 */
 	public void color(MilightColor color) throws IOException {
-		color(color.getMilightHue());
+		color(color, false);
 	}
 
 	/**
 	 * Set the color value for the currently active group of lights (the last
 	 * one that was switched on).
+	 * 
+	 * @param color
+	 *            is the color to set
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	public void color(Color color, boolean forceColoredMode) throws IOException {
+		color(new MilightColor(color), forceColoredMode);
+	}
+
+	/**
+	 * Set the color value for the currently active group of lights (the last
+	 * one that was switched on). Colors with low saturation will be displayed
+	 * in white mode for a better result.
 	 * 
 	 * @param color
 	 *            is the color to set
@@ -722,12 +782,6 @@ public class WiFiBox {
 	 */
 	public void color(int group, int value) throws IOException,
 			IllegalArgumentException {
-		// check arguments
-		if (value < MilightColor.MIN_COLOR || value > MilightColor.MAX_COLOR) {
-			throw new IllegalArgumentException(
-					"The color value should be between MilightColor.MIN_COLOR and MilightColor.MAX_COLOR");
-		}
-
 		// create message array
 		byte[][] messages = new byte[2][3];
 
@@ -735,7 +789,7 @@ public class WiFiBox {
 		messages[0] = getSwitchOnCommand(group);
 
 		// adjust color
-		messages[1] = padMessage(COMMAND_COLOR, value);
+		messages[1] = getColorCommand(value);
 
 		// send messages
 		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
@@ -748,6 +802,34 @@ public class WiFiBox {
 	 *            is the number of the group to set the color for
 	 * @param color
 	 *            is the color to set
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
+	 * @throws IOException
+	 *             if the message could not be sent
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void color(int group, MilightColor color, boolean forceColoredMode)
+			throws IOException, IllegalArgumentException {
+		if (color.isColoredMode() || forceColoredMode) {
+			// colored mode
+			color(group, color.getMilightHue());
+		} else {
+			// white mode
+			white(group);
+		}
+	}
+
+	/**
+	 * Set the color value for a given group of lights. Colors with low
+	 * saturation will be displayed in white mode for a better result.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to set
 	 * @throws IOException
 	 *             if the message could not be sent
 	 * @throws IllegalArgumentException
@@ -755,11 +837,33 @@ public class WiFiBox {
 	 */
 	public void color(int group, MilightColor color) throws IOException,
 			IllegalArgumentException {
-		color(group, color.getMilightHue());
+		color(group, color, false);
 	}
 
 	/**
 	 * Set the color value for a given group of lights.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to set
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
+	 * @throws IOException
+	 *             if the message could not be sent
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void color(int group, Color color, boolean forceColoredMode)
+			throws IOException, IllegalArgumentException {
+		color(group, new MilightColor(color), forceColoredMode);
+	}
+
+	/**
+	 * Set the color value for a given group of lights. Colors with low
+	 * saturation will be displayed in white mode for a better result.
 	 * 
 	 * @param group
 	 *            is the number of the group to set the color for
@@ -788,7 +892,7 @@ public class WiFiBox {
 		byte[][] messages = new byte[2][3];
 
 		// adjust color
-		messages[0] = padMessage(COMMAND_COLOR, color.getMilightHue());
+		messages[0] = getColorCommand(color.getMilightHue());
 
 		// adjust brightness
 		messages[1] = padMessage(COMMAND_BRIGHTNESS,
@@ -819,10 +923,15 @@ public class WiFiBox {
 	 *            is the number of the group to set the color for
 	 * @param color
 	 *            is the color to extract hue and brightness from
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
 	 * @throws IllegalArgumentException
 	 *             if group is not between 1 and 4
 	 */
-	public void colorAndBrightness(int group, MilightColor color) {
+	public void colorAndBrightness(int group, MilightColor color,
+			boolean forceColoredMode) {
 		// create message array
 		byte[][] messages = new byte[3][3];
 
@@ -830,7 +939,13 @@ public class WiFiBox {
 		messages[0] = getSwitchOnCommand(group);
 
 		// adjust color
-		messages[1] = padMessage(COMMAND_COLOR, color.getMilightHue());
+		if (color.isColoredMode() || forceColoredMode) {
+			// colored mode
+			messages[1] = getColorCommand(color.getMilightHue());
+		} else {
+			// white mode
+			messages[1] = getWhiteModeCommand(group);
+		}
 
 		// adjust brightness
 		messages[2] = padMessage(COMMAND_BRIGHTNESS,
@@ -838,5 +953,60 @@ public class WiFiBox {
 
 		// send messages
 		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
+	}
+
+	/**
+	 * Set the color and brightness values for a given group of lights. Both
+	 * values are extracted from the color given to the function by transforming
+	 * it to an HSB color. Colors with low saturation will be displayed in white
+	 * mode for a better result.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void colorAndBrightness(int group, MilightColor color) {
+		colorAndBrightness(group, color, false);
+	}
+
+	/**
+	 * Set the color and brightness values for a given group of lights. Both
+	 * values are extracted from the color given to the function by transforming
+	 * it to an HSB color.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void colorAndBrightness(int group, Color color,
+			boolean forceColoredMode) {
+		colorAndBrightness(group, new MilightColor(color), forceColoredMode);
+	}
+
+	/**
+	 * Set the color and brightness values for a given group of lights. Both
+	 * values are extracted from the color given to the function by transforming
+	 * it to an HSB color. Colors with low saturation will be displayed in white
+	 * mode for a better result.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void colorAndBrightness(int group, Color color) {
+		colorAndBrightness(group, new MilightColor(color));
 	}
 }

@@ -52,6 +52,13 @@ public class MilightColor {
 	public static final int MAX_BRIGHTNESS = 0x1B;
 
 	/**
+	 * This threshold defines where the lights should change between white and
+	 * colored mode. All saturation values under the threshold will be displayed
+	 * in white mode, everything equal or above in colored mode.
+	 */
+	public static final float SATURATION_THRESHOLD = 0.5f;
+
+	/**
 	 * Use this constructor to generate a new MilightColor representing a
 	 * specified color.
 	 * 
@@ -157,5 +164,29 @@ public class MilightColor {
 		// scale the value
 		return MIN_BRIGHTNESS
 				+ (int) (getBrightness() * (MAX_BRIGHTNESS - MIN_BRIGHTNESS));
+	}
+
+	/**
+	 * This function computes whether a color should be displayed in white or
+	 * colored mode. The white mode will be used if the saturation of the color
+	 * is below {@link MilightColor#SATURATION_THRESHOLD}.
+	 * 
+	 * @return true if the white mode should be used, false if the colored mode
+	 *         should be used
+	 */
+	public boolean isWhiteMode() {
+		return getSaturation() < SATURATION_THRESHOLD;
+	}
+
+	/**
+	 * This function computes whether a color should be displayed in white or
+	 * colored mode. The white mode will be used if the saturation of the color
+	 * is below {@link MilightColor#SATURATION_THRESHOLD}.
+	 * 
+	 * @return true if the colored mode should be used, false if the white mode
+	 *         should be used
+	 */
+	public boolean isColoredMode() {
+		return !isWhiteMode();
 	}
 }
