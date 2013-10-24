@@ -386,4 +386,44 @@ public class Lights {
 	public void colorAndBrightness(Color color) {
 		wifiBox.colorAndBrightness(color);
 	}
+
+	/**
+	 * This function makes the light blink in a given color as a notification.
+	 * The messages will be sent in a new thread.
+	 * 
+	 * @param color
+	 *            is the color to blink in (white mode in the mean time)
+	 * @param times
+	 *            is the number of times to blink
+	 * @param colorTime
+	 *            is the time to stay in colored mode in milliseconds
+	 * @param whiteTime
+	 *            is the time to stay in white mode (between blinking) in
+	 *            milliseconds
+	 */
+	public void blink(final Color color, final int times, final long colorTime,
+			final long whiteTime) {
+		// run in a new thread
+		new Thread(new Runnable() {
+			public void run() {
+				try {
+					for (int i = 0; i < times; i++) {
+						// colored mode
+						color(color);
+						Thread.sleep(colorTime);
+
+						// white mode
+						white();
+						Thread.sleep(whiteTime);
+					}
+				} catch (IOException e) {
+					// exception while sending the messages
+					return;
+				} catch (InterruptedException e) {
+					// exception while sleeping
+					return;
+				}
+			}
+		}).start();
+	}
 }
