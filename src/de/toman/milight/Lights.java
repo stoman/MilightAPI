@@ -282,13 +282,14 @@ public class Lights {
 	 * @throws IOException
 	 *             if the message could not be sent
 	 */
-	public void color(MilightColor color, boolean forceColoredMode) throws IOException {
+	public void color(MilightColor color, boolean forceColoredMode)
+			throws IOException {
 		wifiBox.color(group, color, forceColoredMode);
 	}
 
 	/**
-	 * Set the color value for the group of lights. Colors with low saturation will be displayed in white
-	 * mode for a better result.
+	 * Set the color value for the group of lights. Colors with low saturation
+	 * will be displayed in white mode for a better result.
 	 * 
 	 * @param color
 	 *            is the color to set
@@ -316,8 +317,8 @@ public class Lights {
 	}
 
 	/**
-	 * Set the color value for the group of lights. Colors with low saturation will be displayed in white
-	 * mode for a better result.
+	 * Set the color value for the group of lights. Colors with low saturation
+	 * will be displayed in white mode for a better result.
 	 * 
 	 * @param color
 	 *            is the color to set
@@ -327,10 +328,11 @@ public class Lights {
 	public void color(Color color) throws IOException {
 		wifiBox.color(group, color);
 	}
-	
+
 	/**
-	 * Set the color and brightness values for the group of lights. Both values are extracted
-	 * from the color given to the function by transforming it to an HSB color.
+	 * Set the color and brightness values for the group of lights. Both values
+	 * are extracted from the color given to the function by transforming it to
+	 * an HSB color.
 	 * 
 	 * @param color
 	 *            is the color to extract hue and brightness from
@@ -344,9 +346,10 @@ public class Lights {
 	}
 
 	/**
-	 * Set the color and brightness values for the group of lights. Both values are extracted
-	 * from the color given to the function by transforming it to an HSB color. Colors with low saturation will be displayed in white
-	 * mode for a better result.
+	 * Set the color and brightness values for the group of lights. Both values
+	 * are extracted from the color given to the function by transforming it to
+	 * an HSB color. Colors with low saturation will be displayed in white mode
+	 * for a better result.
 	 * 
 	 * @param color
 	 *            is the color to extract hue and brightness from
@@ -356,8 +359,9 @@ public class Lights {
 	}
 
 	/**
-	 * Set the color and brightness values for the group of lights. Both values are extracted
-	 * from the color given to the function by transforming it to an HSB color.
+	 * Set the color and brightness values for the group of lights. Both values
+	 * are extracted from the color given to the function by transforming it to
+	 * an HSB color.
 	 * 
 	 * @param color
 	 *            is the color to extract hue and brightness from
@@ -371,9 +375,10 @@ public class Lights {
 	}
 
 	/**
-	 * Set the color and brightness values for the group of lights. Both values are extracted
-	 * from the color given to the function by transforming it to an HSB color. Colors with low saturation will be displayed in white
-	 * mode for a better result.
+	 * Set the color and brightness values for the group of lights. Both values
+	 * are extracted from the color given to the function by transforming it to
+	 * an HSB color. Colors with low saturation will be displayed in white mode
+	 * for a better result.
 	 * 
 	 * @param color
 	 *            is the color to extract hue and brightness from
