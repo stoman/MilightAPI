@@ -400,9 +400,27 @@ public class Lights {
 	 * @param whiteTime
 	 *            is the time to stay in white mode (between blinking) in
 	 *            milliseconds
+	 * @throws IllegalArgumentException
+	 *             if the time in colored or white mode is not at least
+	 *             2*WiFiBox.MIN_SLEEP_BETWEEN_MESSAGES or the times variable is
+	 *             non-positive
 	 */
 	public void blink(final Color color, final int times, final long colorTime,
-			final long whiteTime) {
+			final long whiteTime) throws IllegalArgumentException {
+		// check arguments
+		if (colorTime < 2 * WiFiBox.MIN_SLEEP_BETWEEN_MESSAGES) {
+			throw new IllegalArgumentException(
+					"The time to stay in colored mode should be at least 2*WiFiBox.MIN_SLEEP_BETWEEN_MESSAGES.");
+		}
+		if (whiteTime < 2 * WiFiBox.MIN_SLEEP_BETWEEN_MESSAGES) {
+			throw new IllegalArgumentException(
+					"The time to stay in white mode should be at least 2*WiFiBox.MIN_SLEEP_BETWEEN_MESSAGES.");
+		}
+		if (times <= 0) {
+			throw new IllegalArgumentException(
+					"The number of times to blink should be at least one.");
+		}
+
 		// run in a new thread
 		new Thread(new Runnable() {
 			public void run() {
@@ -425,5 +443,34 @@ public class Lights {
 				}
 			}
 		}).start();
+	}
+
+	/**
+	 * This function makes the light blink in a given color as a notification.
+	 * The each phase of the blinking will last one second. The messages will be
+	 * sent in a new thread.
+	 * 
+	 * @param color
+	 *            is the color to blink in (white mode in the mean time)
+	 * @param times
+	 *            is the number of times to blink
+	 * @throws IllegalArgumentException
+	 *             if the times variable is non-positive
+	 */
+	public void blink(final Color color, final int times)
+			throws IllegalArgumentException {
+		blink(color, times, 1 * 60 * 1000, 1 * 60 * 1000);
+	}
+
+	/**
+	 * This function makes the light blink in a given color three times as a
+	 * notification. The each phase of the blinking will last one second. The
+	 * messages will be sent in a new thread.
+	 * 
+	 * @param color
+	 *            is the color to blink in (white mode in the mean time)
+	 */
+	public void blink(final Color color) throws IllegalArgumentException {
+		blink(color, 3);
 	}
 }
