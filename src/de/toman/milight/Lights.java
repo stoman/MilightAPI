@@ -427,7 +427,7 @@ public class Lights {
 				try {
 					for (int i = 0; i < times; i++) {
 						// colored mode
-						color(color);
+						color(color, true);
 						Thread.sleep(colorTime);
 
 						// white mode
@@ -459,7 +459,7 @@ public class Lights {
 	 */
 	public void blink(final Color color, final int times)
 			throws IllegalArgumentException {
-		blink(color, times, 1 * 60 * 1000, 1 * 60 * 1000);
+		blink(color, times, 1000, 1000);
 	}
 
 	/**
