@@ -13,6 +13,7 @@ import de.toman.milight.Lights;
  * @author Stefan Toman (toman@tum.de)
  */
 public abstract class LightEvent extends EventObject {
+	
 	/**
 	 * A generated serial version uid.
 	 */
