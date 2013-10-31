@@ -4,6 +4,11 @@ import java.awt.Color;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashSet;
+import java.util.Set;
+
+import de.toman.milight.events.LightEvent;
+import de.toman.milight.events.LightListener;
 
 /**
  * This class represents a group of LED light bulbs that are connected to a WiFi
@@ -24,6 +29,11 @@ public class Lights {
 	private int group;
 
 	/**
+	 * The set of all listeners listening for this group of lights.
+	 */
+	private Set<LightListener> lightListeners;
+
+	/**
 	 * This constructor creates a new group of lights for a given WiFi box.
 	 * 
 	 * @param wifiBox
@@ -37,6 +47,7 @@ public class Lights {
 		super();
 		this.wifiBox = wifiBox;
 		setGroup(group);
+		lightListeners = new HashSet<LightListener>();
 	}
 
 	/**
@@ -61,6 +72,7 @@ public class Lights {
 		super();
 		wifiBox = new WiFiBox(address, port);
 		setGroup(group);
+		lightListeners = new HashSet<LightListener>();
 	}
 
 	/**
@@ -83,6 +95,7 @@ public class Lights {
 		super();
 		wifiBox = new WiFiBox(address);
 		setGroup(group);
+		lightListeners = new HashSet<LightListener>();
 	}
 
 	/**
@@ -110,6 +123,7 @@ public class Lights {
 		super();
 		wifiBox = new WiFiBox(host, port);
 		setGroup(group);
+		lightListeners = new HashSet<LightListener>();
 	}
 
 	/**
@@ -135,6 +149,7 @@ public class Lights {
 		super();
 		wifiBox = new WiFiBox(host);
 		setGroup(group);
+		lightListeners = new HashSet<LightListener>();
 	}
 
 	/**
@@ -472,5 +487,42 @@ public class Lights {
 	 */
 	public void blink(final Color color) throws IllegalArgumentException {
 		blink(color, 3);
+	}
+
+	/**
+	 * Use this function to add a new listener to the group of lights. Listeners
+	 * will be notified when the group of lights is switched on or off, color or
+	 * brightness change, white or disco mode is activated or disco mode is set
+	 * faster or slower.
+	 * 
+	 * @param listener
+	 *            is the listener to add
+	 */
+	public void addLightListener(LightListener listener) {
+		lightListeners.add(listener);
+	}
+
+	/**
+	 * This function removes a listener from this group of lights which was
+	 * added before by {@link Lights#addLightListener(LightListener)}.
+	 * 
+	 * @param listener
+	 *            is the listener to remove
+	 */
+	public void removeLightListener(LightListener listener) {
+		lightListeners.remove(listener);
+	}
+
+	/**
+	 * This function sends a LightEvent to all listeners listening on this group
+	 * of lights.
+	 * 
+	 * @param event
+	 *            is the LightEvent to send to all listeners
+	 */
+	private void notifyLightListeners(LightEvent event) {
+		for (LightListener listener : lightListeners) {
+			listener.lightsChanged(event);
+		}
 	}
 }
