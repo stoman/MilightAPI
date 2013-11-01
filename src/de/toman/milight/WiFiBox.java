@@ -6,6 +6,11 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashSet;
+import java.util.Set;
+
+import de.toman.milight.events.LightEvent;
+import de.toman.milight.events.LightListener;
 
 /**
  * This class represents a MiLight WiFi box and is able to send commands to a
@@ -23,6 +28,12 @@ public class WiFiBox {
 	 * The port of the WiFi box
 	 */
 	private int port;
+
+	/**
+	 * The set of all listeners listening for all groups of lights connected to
+	 * this WiFiBox.
+	 */
+	private Set<LightListener>[] lightListeners;
 
 	/**
 	 * The default port for unconfigured boxes.
@@ -145,10 +156,20 @@ public class WiFiBox {
 	 * @param port
 	 *            is the port of the WiFi box (omit this if unsure)
 	 */
+	@SuppressWarnings("unchecked")
 	public WiFiBox(InetAddress address, int port) {
+		// super call
 		super();
+
+		// save attributes
 		this.address = address;
 		this.port = port;
+
+		// create listener sets
+		lightListeners = new HashSet[4];
+		for (int i = 0; i < 4; i++) {
+			lightListeners[i] = new HashSet<LightListener>();
+		}
 	}
 
 	/**
@@ -1008,5 +1029,75 @@ public class WiFiBox {
 	 */
 	public void colorAndBrightness(int group, Color color) {
 		colorAndBrightness(group, new MilightColor(color));
+	}
+
+	/**
+	 * Use this function to add a new listener one group of lights connected to
+	 * the WiFiBox. Listeners will be notified when the group of lights is
+	 * switched on or off, color or brightness change, white or disco mode is
+	 * activated or disco mode is set faster or slower.
+	 * 
+	 * @param group
+	 *            is the number of the group to add the listener to
+	 * @param listener
+	 *            is the listener to add
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void addLightListener(int group, LightListener listener) {
+		// check group number
+		if (1 > group || group > 4) {
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+
+		// add listener
+		lightListeners[group - 1].add(listener);
+	}
+
+	/**
+	 * This function removes a listener from this WiFiBox which was added before
+	 * by {@link WiFiBox#addLightListener(int, LightListener)}.
+	 * 
+	 * @param group
+	 *            is the number of the group to remove the listener from
+	 * @param listener
+	 *            is the listener to remove
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void removeLightListener(int group, LightListener listener) {
+		// check group number
+		if (1 > group || group > 4) {
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+
+		// remove listener
+		lightListeners[group - 1].remove(listener);
+	}
+
+	/**
+	 * This function sends a LightEvent to all listeners listening on a certain
+	 * group of lights.
+	 * 
+	 * @param group
+	 *            is the number of the group to notify
+	 * @param event
+	 *            is the LightEvent to send to all listeners
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	private void notifyLightListeners(int group, LightEvent event) {
+		// check group number
+		if (1 > group || group > 4) {
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+
+		// notify listeners
+		for (LightListener listener : lightListeners[group - 1]) {
+			listener.lightsChanged(event);
+		}
 	}
 }
