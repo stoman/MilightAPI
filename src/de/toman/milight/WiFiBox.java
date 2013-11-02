@@ -36,6 +36,11 @@ public class WiFiBox {
 	private Set<LightListener>[] lightListeners;
 
 	/**
+	 * The number of the currently active group
+	 */
+	private int activeGroup;
+
+	/**
 	 * The default port for unconfigured boxes.
 	 */
 	public static final int DEFAULT_PORT = 8899;
@@ -248,16 +253,38 @@ public class WiFiBox {
 	 *             if the message could not be sent
 	 */
 	private void sendMessage(byte[] messages) throws IOException {
+		// check arguments
 		if (messages.length != 3) {
 			throw new IllegalArgumentException(
 					"The message to send should consist of exactly 3 bytes.");
 		}
 
+		// send message
 		DatagramSocket socket = new DatagramSocket();
 		DatagramPacket packet = new DatagramPacket(messages, messages.length,
 				address, port);
 		socket.send(packet);
 		socket.close();
+
+		// adjust currently active group of lights
+		switch (messages[0]) {
+		case COMMAND_GROUP_1_ON:
+		case COMMAND_GROUP_1_OFF:
+			activeGroup = 1;
+			break;
+		case COMMAND_GROUP_2_ON:
+		case COMMAND_GROUP_2_OFF:
+			activeGroup = 2;
+			break;
+		case COMMAND_GROUP_3_ON:
+		case COMMAND_GROUP_3_OFF:
+			activeGroup = 3;
+			break;
+		case COMMAND_GROUP_4_ON:
+		case COMMAND_GROUP_4_OFF:
+			activeGroup = 4;
+			break;
+		}
 	}
 
 	/**
@@ -580,7 +607,7 @@ public class WiFiBox {
 
 	/**
 	 * Trigger the disco mode for the active group of lights (the last one that
-	 * was switched on).
+	 * was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @throws IOException
 	 *             if the message could not be sent
@@ -617,7 +644,7 @@ public class WiFiBox {
 
 	/**
 	 * Increase the disco mode's speed for the active group of lights (the last
-	 * one that was switched on).
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @throws IOException
 	 *             if the message could not be sent
@@ -628,7 +655,7 @@ public class WiFiBox {
 
 	/**
 	 * Decrease the disco mode's speed for the active group of lights (the last
-	 * one that was switched on).
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @throws IOException
 	 *             if the message could not be sent
@@ -639,7 +666,7 @@ public class WiFiBox {
 
 	/**
 	 * Set the brightness value for the currently active group of lights (the
-	 * last one that was switched on).
+	 * last one that was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @param value
 	 *            is the brightness value to set (between
@@ -702,7 +729,7 @@ public class WiFiBox {
 
 	/**
 	 * Set the color value for the currently active group of lights (the last
-	 * one that was switched on).
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @param value
 	 *            is the color value to set (between MilightColor.MIN_COLOR and
@@ -720,7 +747,7 @@ public class WiFiBox {
 
 	/**
 	 * Set the color value for the currently active group of lights (the last
-	 * one that was switched on).
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @param color
 	 *            is the color to set
@@ -744,8 +771,8 @@ public class WiFiBox {
 
 	/**
 	 * Set the color value for the currently active group of lights (the last
-	 * one that was switched on). Colors with low saturation will be displayed
-	 * in white mode for a better result.
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}). Colors
+	 * with low saturation will be displayed in white mode for a better result.
 	 * 
 	 * @param color
 	 *            is the color to set
@@ -758,7 +785,7 @@ public class WiFiBox {
 
 	/**
 	 * Set the color value for the currently active group of lights (the last
-	 * one that was switched on).
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @param color
 	 *            is the color to set
@@ -775,8 +802,8 @@ public class WiFiBox {
 
 	/**
 	 * Set the color value for the currently active group of lights (the last
-	 * one that was switched on). Colors with low saturation will be displayed
-	 * in white mode for a better result.
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}). Colors
+	 * with low saturation will be displayed in white mode for a better result.
 	 * 
 	 * @param color
 	 *            is the color to set
@@ -902,8 +929,9 @@ public class WiFiBox {
 
 	/**
 	 * Set the color and brightness values for the currently active group of
-	 * lights (the last one that was switched on). Both values are extracted
-	 * from the color given to the function by transforming it to an HSB color.
+	 * lights (the last one that was switched on, see
+	 * {@link WiFiBox#getActiveGroup()}). Both values are extracted from the
+	 * color given to the function by transforming it to an HSB color.
 	 * 
 	 * @param color
 	 *            is the color to extract hue and brightness from
@@ -925,8 +953,9 @@ public class WiFiBox {
 
 	/**
 	 * Set the color and brightness values for the currently active group of
-	 * lights (the last one that was switched on). Both values are extracted
-	 * from the color given to the function by transforming it to an HSB color.
+	 * lights (the last one that was switched on, see
+	 * {@link WiFiBox#getActiveGroup()}). Both values are extracted from the
+	 * color given to the function by transforming it to an HSB color.
 	 * 
 	 * @param color
 	 *            is the color to extract hue and brightness from
@@ -1099,5 +1128,14 @@ public class WiFiBox {
 		for (LightListener listener : lightListeners[group - 1]) {
 			listener.lightsChanged(event);
 		}
+	}
+
+	/**
+	 * This function returns the number of the currently active group of lights.
+	 * 
+	 * @return the number of the currently active group of lights
+	 */
+	public int getActiveGroup() {
+		return activeGroup;
 	}
 }
