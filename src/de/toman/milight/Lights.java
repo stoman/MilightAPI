@@ -46,8 +46,7 @@ public class Lights {
 	public Lights(WiFiBox wifiBox, int group) throws IllegalArgumentException {
 		super();
 		this.wifiBox = wifiBox;
-		setGroup(group);
-		lightListeners = new HashSet<LightListener>();
+		initialize(group);
 	}
 
 	/**
@@ -71,8 +70,7 @@ public class Lights {
 	public Lights(InetAddress address, int port, int group) {
 		super();
 		wifiBox = new WiFiBox(address, port);
-		setGroup(group);
-		lightListeners = new HashSet<LightListener>();
+		initialize(group);
 	}
 
 	/**
@@ -94,8 +92,7 @@ public class Lights {
 	public Lights(InetAddress address, int group) {
 		super();
 		wifiBox = new WiFiBox(address);
-		setGroup(group);
-		lightListeners = new HashSet<LightListener>();
+		initialize(group);
 	}
 
 	/**
@@ -122,8 +119,7 @@ public class Lights {
 	public Lights(String host, int port, int group) throws UnknownHostException {
 		super();
 		wifiBox = new WiFiBox(host, port);
-		setGroup(group);
-		lightListeners = new HashSet<LightListener>();
+		initialize(group);
 	}
 
 	/**
@@ -148,8 +144,36 @@ public class Lights {
 	public Lights(String host, int group) throws UnknownHostException {
 		super();
 		wifiBox = new WiFiBox(host);
+		initialize(group);
+	}
+
+	/**
+	 * This private function initializes a new Lights instance. This should be
+	 * called by the constructor, but just once. It sets up the group attribute,
+	 * creates a new Set instance for the LightListeners and adds a listener to
+	 * the WiFiBox which redirects all events belonging to this group from
+	 * there. Call this only when the {@link Lights#wifiBox} attribute is set.
+	 * 
+	 * @param group
+	 *            is the number of the group at the WiFi box (between 1 and 4)
+	 * @throws IllegalArgumentException
+	 *             if the group number is not between 1 and 4
+	 */
+	private void initialize(int group) {
+		// set group number
 		setGroup(group);
+
+		// create list of listeners
 		lightListeners = new HashSet<LightListener>();
+
+		// listen to WiFiBox and redirect events
+		wifiBox.addLightListener(group, new LightListener() {
+			@Override
+			public void lightsChanged(LightEvent event) {
+				// an event is triggered, redirect it
+				notifyLightListeners(event);
+			}
+		});
 	}
 
 	/**
