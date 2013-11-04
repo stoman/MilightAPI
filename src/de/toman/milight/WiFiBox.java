@@ -259,6 +259,9 @@ public class WiFiBox {
 					"The message to send should consist of exactly 3 bytes.");
 		}
 
+		// notify listeners
+		notifyLightListeners(messages);
+
 		// send message
 		DatagramSocket socket = new DatagramSocket();
 		DatagramPacket packet = new DatagramPacket(messages, messages.length,
@@ -1127,6 +1130,34 @@ public class WiFiBox {
 		// notify listeners
 		for (LightListener listener : lightListeners[group - 1]) {
 			listener.lightsChanged(event);
+		}
+	}
+
+	/**
+	 * This function sends a LightEvent to all listeners listening on some group
+	 * of lights.
+	 * 
+	 * @param event
+	 *            is the LightEvent to send to all listeners
+	 */
+	private void notifyLightListeners(LightEvent event) {
+		for (int i = 1; i <= 4; i++) {
+			notifyLightListeners(i, event);
+		}
+	}
+
+	/**
+	 * This function sends a LightEvent to all listeners listening on a certain
+	 * group of lights. The event's type and the group of lights receiving the
+	 * message is obtained from the raw message sent to the WiFiBox.
+	 * 
+	 * @param message
+	 *            is the raw message sent to the WiFiBox
+	 */
+	private void notifyLightListeners(byte[] message) {
+		switch (message[0]) {
+		case COMMAND_ALL_OFF:
+			//TODO
 		}
 	}
 
