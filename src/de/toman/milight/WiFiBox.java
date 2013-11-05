@@ -9,8 +9,16 @@ import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.toman.milight.events.ChangeBrightnessEvent;
+import de.toman.milight.events.ChangeColorEvent;
+import de.toman.milight.events.DiscoModeEvent;
+import de.toman.milight.events.DiscoModeFasterEvent;
+import de.toman.milight.events.DiscoModeSlowerEvent;
 import de.toman.milight.events.LightEvent;
 import de.toman.milight.events.LightListener;
+import de.toman.milight.events.SwitchOffEvent;
+import de.toman.milight.events.SwitchOnEvent;
+import de.toman.milight.events.WhiteModeEvent;
 
 /**
  * This class represents a MiLight WiFi box and is able to send commands to a
@@ -1134,19 +1142,6 @@ public class WiFiBox {
 	}
 
 	/**
-	 * This function sends a LightEvent to all listeners listening on some group
-	 * of lights.
-	 * 
-	 * @param event
-	 *            is the LightEvent to send to all listeners
-	 */
-	private void notifyLightListeners(LightEvent event) {
-		for (int i = 1; i <= 4; i++) {
-			notifyLightListeners(i, event);
-		}
-	}
-
-	/**
 	 * This function sends a LightEvent to all listeners listening on a certain
 	 * group of lights. The event's type and the group of lights receiving the
 	 * message is obtained from the raw message sent to the WiFiBox.
@@ -1155,9 +1150,86 @@ public class WiFiBox {
 	 *            is the raw message sent to the WiFiBox
 	 */
 	private void notifyLightListeners(byte[] message) {
-		switch (message[0]) {
+		switch ((int) message[0]) {
+		// switch off commands
 		case COMMAND_ALL_OFF:
-			//TODO
+			for (int group = 1; group <= 4; group++) {
+				notifyLightListeners(group,
+						new SwitchOffEvent(getLights(group)));
+			}
+			break;
+		case COMMAND_GROUP_1_OFF:
+			notifyLightListeners(1, new SwitchOffEvent(getLights(1)));
+			break;
+		case COMMAND_GROUP_2_OFF:
+			notifyLightListeners(2, new SwitchOffEvent(getLights(2)));
+			break;
+		case COMMAND_GROUP_3_OFF:
+			notifyLightListeners(3, new SwitchOffEvent(getLights(3)));
+			break;
+		case COMMAND_GROUP_4_OFF:
+			notifyLightListeners(4, new SwitchOffEvent(getLights(4)));
+			break;
+		// switch on commands
+		case COMMAND_ALL_ON:
+			for (int group = 1; group <= 4; group++) {
+				notifyLightListeners(group, new SwitchOnEvent(getLights(group)));
+			}
+			break;
+		case COMMAND_GROUP_1_ON:
+			notifyLightListeners(1, new SwitchOnEvent(getLights(1)));
+			break;
+		case COMMAND_GROUP_2_ON:
+			notifyLightListeners(2, new SwitchOnEvent(getLights(2)));
+			break;
+		case COMMAND_GROUP_3_ON:
+			notifyLightListeners(3, new SwitchOnEvent(getLights(3)));
+			break;
+		case COMMAND_GROUP_4_ON:
+			notifyLightListeners(4, new SwitchOnEvent(getLights(4)));
+			break;
+		// white mode commands
+		case COMMAND_ALL_WHITE:
+			for (int group = 1; group <= 4; group++) {
+				notifyLightListeners(group,
+						new WhiteModeEvent(getLights(group)));
+			}
+			break;
+		case COMMAND_GROUP_1_WHITE:
+			notifyLightListeners(1, new WhiteModeEvent(getLights(1)));
+			break;
+		case COMMAND_GROUP_2_WHITE:
+			notifyLightListeners(2, new WhiteModeEvent(getLights(2)));
+			break;
+		case COMMAND_GROUP_3_WHITE:
+			notifyLightListeners(3, new WhiteModeEvent(getLights(3)));
+			break;
+		case COMMAND_GROUP_4_WHITE:
+			notifyLightListeners(4, new WhiteModeEvent(getLights(4)));
+			break;
+		// disco mode commands
+		case COMMAND_DISCO:
+			notifyLightListeners(getActiveGroup(), new DiscoModeEvent(
+					getLights(getActiveGroup())));
+			break;
+		case COMMAND_DISCO_FASTER:
+			notifyLightListeners(getActiveGroup(), new DiscoModeFasterEvent(
+					getLights(getActiveGroup())));
+			break;
+		case COMMAND_DISCO_SLOWER:
+			notifyLightListeners(getActiveGroup(), new DiscoModeSlowerEvent(
+					getLights(getActiveGroup())));
+			break;
+		// change color commands
+		case COMMAND_COLOR:
+			notifyLightListeners(getActiveGroup(), new ChangeColorEvent(
+					getLights(getActiveGroup()), null));// TODO find color
+			break;
+		// change brightness commands
+		case COMMAND_BRIGHTNESS:
+			notifyLightListeners(getActiveGroup(), new ChangeBrightnessEvent(
+					getLights(getActiveGroup()), 0));// TODO find brightness
+			break;
 		}
 	}
 
