@@ -146,7 +146,7 @@ public class MilightColor {
 	public int getMilightHue() {
 		// transform value by a linear change on the scale between 0 and 1
 		// setting 0 to 2/3, 1/3 to 1/3 and 2/3 to 0
-		float milightHue = (1f - (getHue() - 1 / 3f) + 1 / 3f) % 1f;
+		float milightHue = (5 / 3f - getHue()) % 1f;
 
 		// scale the value
 		return (int) (milightHue * MAX_COLOR);
