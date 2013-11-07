@@ -115,6 +115,21 @@ public class MilightColor {
 	}
 
 	/**
+	 * Set a new hue value and let the brightness and saturation values
+	 * untouched.
+	 * 
+	 * @param hue
+	 *            is the new hue value from 0 to 1
+	 */
+	public void setHue(float hue) {
+		// get hsb values
+		float[] hsb = getHSB();
+
+		// set new color
+		setColor(new Color(Color.HSBtoRGB(hue, hsb[1], hsb[2])));
+	}
+
+	/**
 	 * Extract the saturation value from the color the instance is representing.
 	 * 
 	 * @return the saturation value in a range between 0 and 1
@@ -150,6 +165,23 @@ public class MilightColor {
 
 		// scale the value
 		return (int) (milightHue * MAX_COLOR);
+	}
+
+	/**
+	 * This function sets a new hue value given as it would be sent to the
+	 * WiFiBox. This function inverts the computation at
+	 * {@link MilightColor#getMilightHue()}.
+	 * 
+	 * @param milightHue
+	 *            is the hue value to set, given as it would be sent to the
+	 *            WiFiBox
+	 */
+	public void setMilightHue(int milightHue) {
+		// reverse transformation in getMilightHue
+		float hue = (5 / 3f - (float) milightHue / MAX_COLOR) % 1f;
+
+		// set hue
+		setHue(hue);
 	}
 
 	/**
