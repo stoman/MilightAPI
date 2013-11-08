@@ -140,6 +140,21 @@ public class MilightColor {
 	}
 
 	/**
+	 * Set a new saturation value and let the brightness and hue values
+	 * untouched.
+	 * 
+	 * @param saturation
+	 *            is the new saturation value from 0 to 1
+	 */
+	public void setSaturation(float saturation) {
+		// get hsb values
+		float[] hsb = getHSB();
+
+		// set new color
+		setColor(new Color(Color.HSBtoRGB(hsb[0], saturation, hsb[2])));
+	}
+
+	/**
 	 * Extract the brightness value from the color the instance is representing.
 	 * 
 	 * @return the brightness value in a range between 0 and 1
@@ -147,6 +162,21 @@ public class MilightColor {
 	 */
 	public float getBrightness() {
 		return getHSB()[2];
+	}
+
+	/**
+	 * Set a new brightness value and let the hue and saturation values
+	 * untouched.
+	 * 
+	 * @param brightness
+	 *            is the new brightness value from 0 to 1
+	 */
+	public void setBrightness(float brightness) {
+		// get hsb values
+		float[] hsb = getHSB();
+
+		// set new color
+		setColor(new Color(Color.HSBtoRGB(hsb[0], hsb[1], brightness)));
 	}
 
 	/**
@@ -196,6 +226,25 @@ public class MilightColor {
 		// scale the value
 		return MIN_BRIGHTNESS
 				+ (int) (getBrightness() * (MAX_BRIGHTNESS - MIN_BRIGHTNESS));
+	}
+
+	/**
+	 * This function sets a new brightness value for the color the instance is
+	 * representingThe value is given as it could be sent to the WiFiBox and
+	 * internally transferred to a float. This reverses the computation of
+	 * {@link MilightColor#getMilightBrightness()}.
+	 * 
+	 * @param milightBrightness
+	 *            is the brightness value to set, given as it would be sent to
+	 *            the WiFiBox
+	 */
+	public void setMilightBrightness(int milightBrightness) {
+		// reverse transformation in getMilightBrightness
+		float brightness = ((float) milightBrightness - MIN_BRIGHTNESS)
+				/ (MAX_BRIGHTNESS - MIN_BRIGHTNESS);
+
+		// set brightness
+		setBrightness(brightness);
 	}
 
 	/**
