@@ -1222,13 +1222,17 @@ public class WiFiBox {
 			break;
 		// change color commands
 		case COMMAND_COLOR:
+			MilightColor color = new MilightColor(Color.WHITE);
+			color.setMilightHue(message[1]);
 			notifyLightListeners(getActiveGroup(), new ChangeColorEvent(
-					getLights(getActiveGroup()), null));// TODO find color
+					getLights(getActiveGroup()), color));
 			break;
 		// change brightness commands
 		case COMMAND_BRIGHTNESS:
+			MilightColor color2 = new MilightColor(Color.WHITE);
+			color2.setMilightBrightness(message[1]);
 			notifyLightListeners(getActiveGroup(), new ChangeBrightnessEvent(
-					getLights(getActiveGroup()), 0));// TODO find brightness
+					getLights(getActiveGroup()), color2.getBrightness()));
 			break;
 		}
 	}
