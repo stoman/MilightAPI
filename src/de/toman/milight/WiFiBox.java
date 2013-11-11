@@ -11,6 +11,7 @@ import java.util.Set;
 
 import de.toman.milight.events.ChangeBrightnessEvent;
 import de.toman.milight.events.ChangeColorEvent;
+import de.toman.milight.events.ColoredModeEvent;
 import de.toman.milight.events.DiscoModeEvent;
 import de.toman.milight.events.DiscoModeFasterEvent;
 import de.toman.milight.events.DiscoModeSlowerEvent;
@@ -1224,6 +1225,8 @@ public class WiFiBox {
 		case COMMAND_COLOR:
 			MilightColor color = new MilightColor(Color.WHITE);
 			color.setMilightHue(message[1]);
+			notifyLightListeners(getActiveGroup(), new ColoredModeEvent(
+					getLights(getActiveGroup())));
 			notifyLightListeners(getActiveGroup(), new ChangeColorEvent(
 					getLights(getActiveGroup()), color));
 			break;
