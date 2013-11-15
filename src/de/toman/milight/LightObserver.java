@@ -7,6 +7,14 @@ import de.toman.milight.events.ChangeColorEvent;
 import de.toman.milight.events.LightEvent;
 import de.toman.milight.events.LightListener;
 
+/**
+ * This class stores the current state of a given group of lights and adjusts
+ * this state each time it changes. It listens to the LightEvent instances fired
+ * and is therefore only notified if commands are send to the group of lights
+ * via this API and not via remote control or other controllers.
+ * 
+ * @author Stefan Toman (toman@tum.de)
+ */
 public class LightObserver {
 	private Lights lights;
 
@@ -16,6 +24,7 @@ public class LightObserver {
 			Color.WHITE);
 	private static final float INITIAL_BRIGHTNESS = 1f;
 	private static final boolean INITIAL_WHITE_MODE = true;
+	private static final boolean INITIAL_ON = false;
 
 	public LightObserver(Lights lights) {
 		// call super constructor
@@ -24,7 +33,7 @@ public class LightObserver {
 		// set attributes
 		this.lights = lights;
 		currentState = new LightState(INITIAL_COLOR, INITIAL_BRIGHTNESS,
-				INITIAL_WHITE_MODE);
+				INITIAL_WHITE_MODE, INITIAL_ON);
 
 		// add as listener
 		lights.addLightListener(new LightListener() {
@@ -34,28 +43,42 @@ public class LightObserver {
 				case "ChangeColorEvent":
 					setCurrentState(new LightState(((ChangeColorEvent) event)
 							.getColor(), currentState.getBrightness(),
-							currentState.isWhiteMode()));
+							currentState.isWhiteMode(), currentState.isOn()));
 					break;
 				// ChangeBrightnessEvent
 				case "ChangeBrightnessEvent":
 					setCurrentState(new LightState(currentState.getColor(),
 							((ChangeBrightnessEvent) event).getBrightness(),
-							currentState.isWhiteMode()));
+							currentState.isWhiteMode(), currentState.isOn()));
 					break;
-				// TODO brightness should be handled different for white/colored
+				// TODO brightness should be handled differently for
+				// white/colored
 				// mode
 				// ColoredModeEvent
 				case "ColoredModeEvent":
 					setCurrentState(new LightState(currentState.getColor(),
-							currentState.getBrightness(), false));
+							currentState.getBrightness(), false, currentState
+									.isOn()));
 					break;
 				// WhiteModeEvent
 				case "WhiteModeEvent":
 					setCurrentState(new LightState(currentState.getColor(),
-							currentState.getBrightness(), true));
+							currentState.getBrightness(), true, currentState
+									.isOn()));
+					break;
+				// SwitchOnEvent
+				case "SwitchOnEvent":
+					setCurrentState(new LightState(currentState.getColor(),
+							currentState.getBrightness(), currentState
+									.isWhiteMode(), true));
+					break;
+				// SwitchOffEvent
+				case "SwitchOffEvent":
+					setCurrentState(new LightState(currentState.getColor(),
+							currentState.getBrightness(), currentState
+									.isWhiteMode(), false));
 					break;
 				}
-
 			}
 		});
 	}

@@ -24,6 +24,11 @@ public class LightState {
 	private float brightness;
 
 	/**
+	 * This variable stores whther the group of lights is currently switched on.
+	 */
+	private boolean on;
+
+	/**
 	 * This constructor creates a new LightState instance which stores the state
 	 * of a group of lights.
 	 * 
@@ -35,11 +40,14 @@ public class LightState {
 	 * @param whiteMode
 	 *            is true if the lights are currently in white mode and false if
 	 *            they are in colored mode
+	 * @param on
+	 *            is true if the group of lights is switched on
 	 * 
 	 * @throws IllegalArgumentException
 	 *             if the brightness value is not between 0 and 1
 	 */
-	public LightState(MilightColor color, float brightness, boolean whiteMode) {
+	public LightState(MilightColor color, float brightness, boolean whiteMode,
+			boolean on) {
 		// super constructor
 		super();
 
@@ -53,6 +61,7 @@ public class LightState {
 		this.color = color;
 		this.brightness = brightness;
 		this.whiteMode = whiteMode;
+		this.on = on;
 	}
 
 	/**
@@ -87,5 +96,14 @@ public class LightState {
 	 */
 	public float getBrightness() {
 		return brightness;
+	}
+
+	/**
+	 * This function returns whether the group of lights is switched on.
+	 * 
+	 * @return true if the group of lights is switched on
+	 */
+	public boolean isOn() {
+		return on;
 	}
 }
