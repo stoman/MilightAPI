@@ -47,13 +47,23 @@ public class LightObserver {
 					break;
 				// ChangeBrightnessEvent
 				case "ChangeBrightnessEvent":
-					setCurrentState(new LightState(currentState.getColor(),
-							((ChangeBrightnessEvent) event).getBrightness(),
-							currentState.isWhiteMode(), currentState.isOn()));
+					if (currentState.isWhiteMode()) {
+						// white mode
+						setCurrentState(new LightState(
+								currentState.getColor(),
+								((ChangeBrightnessEvent) event).getBrightness(),
+								currentState.isWhiteMode(), currentState.isOn()));
+					} else {
+						// colored mode
+						MilightColor color = currentState.getColor();
+						color.setBrightness(((ChangeBrightnessEvent) event)
+								.getBrightness());
+						setCurrentState(new LightState(color, currentState
+								.getBrightness(), currentState.isWhiteMode(),
+								currentState.isOn()));
+
+					}
 					break;
-				// TODO brightness should be handled differently for
-				// white/colored
-				// mode
 				// ColoredModeEvent
 				case "ColoredModeEvent":
 					setCurrentState(new LightState(currentState.getColor(),
