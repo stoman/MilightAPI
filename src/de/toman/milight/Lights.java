@@ -423,7 +423,7 @@ public class Lights {
 	 *            is the color to extract hue and brightness from
 	 */
 	public void colorAndBrightness(Color color) {
-		wifiBox.colorAndBrightness(color);
+		wifiBox.colorAndBrightness(group, color);
 	}
 
 	/**

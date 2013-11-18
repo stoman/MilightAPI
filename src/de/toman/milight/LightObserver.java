@@ -16,17 +16,53 @@ import de.toman.milight.events.LightListener;
  * @author Stefan Toman (toman@tum.de)
  */
 public class LightObserver {
+	/**
+	 * The group of lights to be observed.
+	 */
 	private Lights lights;
 
+	/**
+	 * The state the group of lights currently has.
+	 */
 	private LightState currentState;
+
+	/**
+	 * The state the group of lights had before sending the last command to
+	 * them.
+	 */
 	private LightState lastState;
 
+	/**
+	 * The color to use when the current color is unknown.
+	 */
 	private static final MilightColor INITIAL_COLOR = new MilightColor(
 			Color.WHITE);
+
+	/**
+	 * The brightness value to use when the current brightness value is unknown.
+	 */
 	private static final float INITIAL_BRIGHTNESS = 1f;
+
+	/**
+	 * The flag to use when it is unknwon whether the group of lights is in
+	 * colored or white mode.
+	 */
 	private static final boolean INITIAL_WHITE_MODE = true;
+
+	/**
+	 * The flag to use when it is unknown whether the group of lights is
+	 * switched on.
+	 */
 	private static final boolean INITIAL_ON = false;
 
+	/**
+	 * This constructor creates a new LightOberserver storing the current and
+	 * last state of a given group of lights. The state will be recorded
+	 * autmotically, you don't need to call another command than this one.
+	 * 
+	 * @param lights
+	 *            the group of lights to observe
+	 */
 	public LightObserver(Lights lights) {
 		// call super constructor
 		super();
@@ -39,11 +75,6 @@ public class LightObserver {
 		// add as listener
 		lights.addLightListener(new LightListener() {
 			public void lightsChanged(LightEvent event) {
-				// change light state
-				lastState = new LightState(currentState.getColor(),
-						currentState.getBrightness(), currentState
-								.isWhiteMode(), currentState.isOn());
-
 				// ChangeColorEvent
 				switch (event.getClass().getSimpleName()) {
 				case "ChangeColorEvent":
@@ -100,29 +131,45 @@ public class LightObserver {
 	}
 
 	/**
-	 * @return the currentState
+	 * This funtion returns the current state of the observed group of lights.
+	 * 
+	 * @return the current state of the observed group of lights
 	 */
 	public LightState getCurrentState() {
 		return currentState;
 	}
 
 	/**
+	 * This private function sets a new current state and backups the last one
+	 * into {@link LightObserver#lastState}.
+	 * 
 	 * @param currentState
-	 *            the currentState to set
+	 *            the new state of the group of lights
 	 */
 	private void setCurrentState(LightState currentState) {
+		// save old state
+		lastState = new LightState(currentState.getColor(),
+				currentState.getBrightness(), currentState.isWhiteMode(),
+				currentState.isOn());
+
+		// set new state
 		this.currentState = currentState;
 	}
 
 	/**
-	 * @return the lastState
+	 * This funtion returns the last state of the observed group of lights (i.e.
+	 * the current state before the last command was sent to them).
+	 * 
+	 * @return the last state of the observed group of lights
 	 */
 	public LightState getLastState() {
 		return lastState;
 	}
 
 	/**
-	 * @return the lights
+	 * This function returns the group of lights observed.
+	 * 
+	 * @return the group of lights observed
 	 */
 	public Lights getLights() {
 		return lights;
