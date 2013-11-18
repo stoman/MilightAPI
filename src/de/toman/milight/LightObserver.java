@@ -19,6 +19,7 @@ public class LightObserver {
 	private Lights lights;
 
 	private LightState currentState;
+	private LightState lastState;
 
 	private static final MilightColor INITIAL_COLOR = new MilightColor(
 			Color.WHITE);
@@ -38,6 +39,11 @@ public class LightObserver {
 		// add as listener
 		lights.addLightListener(new LightListener() {
 			public void lightsChanged(LightEvent event) {
+				// change light state
+				lastState = new LightState(currentState.getColor(),
+						currentState.getBrightness(), currentState
+								.isWhiteMode(), currentState.isOn());
+
 				// ChangeColorEvent
 				switch (event.getClass().getSimpleName()) {
 				case "ChangeColorEvent":
@@ -106,6 +112,13 @@ public class LightObserver {
 	 */
 	private void setCurrentState(LightState currentState) {
 		this.currentState = currentState;
+	}
+
+	/**
+	 * @return the lastState
+	 */
+	public LightState getLastState() {
+		return lastState;
 	}
 
 	/**
