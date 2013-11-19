@@ -1,6 +1,7 @@
 package de.toman.milight;
 
 import java.awt.Color;
+import java.util.Stack;
 
 import de.toman.milight.events.ChangeBrightnessEvent;
 import de.toman.milight.events.ChangeColorEvent;
@@ -22,15 +23,10 @@ public class LightObserver {
 	private Lights lights;
 
 	/**
-	 * The state the group of lights currently has.
+	 * A stack of states the group of lights had, beginning with the current
+	 * state.
 	 */
-	private LightState currentState;
-
-	/**
-	 * The state the group of lights had before sending the last command to
-	 * them.
-	 */
-	private LightState lastState;
+	private Stack<LightState> states;
 
 	/**
 	 * The color to use when the current color is unknown.
@@ -69,8 +65,9 @@ public class LightObserver {
 
 		// set attributes
 		this.lights = lights;
-		currentState = new LightState(INITIAL_COLOR, INITIAL_BRIGHTNESS,
-				INITIAL_WHITE_MODE, INITIAL_ON);
+		states = new Stack<LightState>();
+		states.add(new LightState(INITIAL_COLOR, INITIAL_BRIGHTNESS,
+				INITIAL_WHITE_MODE, INITIAL_ON));
 
 		// add as listener
 		lights.addLightListener(new LightListener() {
@@ -79,51 +76,53 @@ public class LightObserver {
 				switch (event.getClass().getSimpleName()) {
 				case "ChangeColorEvent":
 					setCurrentState(new LightState(((ChangeColorEvent) event)
-							.getColor(), currentState.getBrightness(),
-							currentState.isWhiteMode(), currentState.isOn()));
+							.getColor(), states.firstElement().getBrightness(),
+							states.firstElement().isWhiteMode(), states
+									.firstElement().isOn()));
 					break;
 				// ChangeBrightnessEvent
 				case "ChangeBrightnessEvent":
-					if (currentState.isWhiteMode()) {
+					if (states.firstElement().isWhiteMode()) {
 						// white mode
-						setCurrentState(new LightState(
-								currentState.getColor(),
-								((ChangeBrightnessEvent) event).getBrightness(),
-								currentState.isWhiteMode(), currentState.isOn()));
+						setCurrentState(new LightState(states.firstElement()
+								.getColor(), ((ChangeBrightnessEvent) event)
+								.getBrightness(), states.firstElement()
+								.isWhiteMode(), states.firstElement().isOn()));
 					} else {
 						// colored mode
-						MilightColor color = currentState.getColor();
+						MilightColor color = states.firstElement().getColor();
 						color.setBrightness(((ChangeBrightnessEvent) event)
 								.getBrightness());
-						setCurrentState(new LightState(color, currentState
-								.getBrightness(), currentState.isWhiteMode(),
-								currentState.isOn()));
+						setCurrentState(new LightState(color, states
+								.firstElement().getBrightness(), states
+								.firstElement().isWhiteMode(), states
+								.firstElement().isOn()));
 
 					}
 					break;
 				// ColoredModeEvent
 				case "ColoredModeEvent":
-					setCurrentState(new LightState(currentState.getColor(),
-							currentState.getBrightness(), false, currentState
-									.isOn()));
+					setCurrentState(new LightState(states.firstElement()
+							.getColor(), states.firstElement().getBrightness(),
+							false, states.firstElement().isOn()));
 					break;
 				// WhiteModeEvent
 				case "WhiteModeEvent":
-					setCurrentState(new LightState(currentState.getColor(),
-							currentState.getBrightness(), true, currentState
-									.isOn()));
+					setCurrentState(new LightState(states.firstElement()
+							.getColor(), states.firstElement().getBrightness(),
+							true, states.firstElement().isOn()));
 					break;
 				// SwitchOnEvent
 				case "SwitchOnEvent":
-					setCurrentState(new LightState(currentState.getColor(),
-							currentState.getBrightness(), currentState
-									.isWhiteMode(), true));
+					setCurrentState(new LightState(states.firstElement()
+							.getColor(), states.firstElement().getBrightness(),
+							states.firstElement().isWhiteMode(), true));
 					break;
 				// SwitchOffEvent
 				case "SwitchOffEvent":
-					setCurrentState(new LightState(currentState.getColor(),
-							currentState.getBrightness(), currentState
-									.isWhiteMode(), false));
+					setCurrentState(new LightState(states.firstElement()
+							.getColor(), states.firstElement().getBrightness(),
+							states.firstElement().isWhiteMode(), false));
 					break;
 				}
 			}
@@ -136,34 +135,39 @@ public class LightObserver {
 	 * @return the current state of the observed group of lights
 	 */
 	public LightState getCurrentState() {
-		return currentState;
+		return states.firstElement();
+	}
+
+	/**
+	 * This function returns a stack of all known states, beginning with the
+	 * current one.
+	 * 
+	 * @return a stack of all known states, beginning with the current one.
+	 */
+	public Stack<LightState> getStates() {
+		return states;
 	}
 
 	/**
 	 * This private function sets a new current state and backups the last one
 	 * into {@link LightObserver#lastState}.
 	 * 
-	 * @param currentState
-	 *            the new state of the group of lights
+	 * @param states
+	 *            .firstElement() the new state of the group of lights
 	 */
-	private void setCurrentState(LightState currentState) {
-		// save old state
-		lastState = new LightState(currentState.getColor(),
-				currentState.getBrightness(), currentState.isWhiteMode(),
-				currentState.isOn());
-
-		// set new state
-		this.currentState = currentState;
+	private void setCurrentState(LightState state) {
+		states.add(state);
 	}
 
 	/**
 	 * This funtion returns the last state of the observed group of lights (i.e.
 	 * the current state before the last command was sent to them).
 	 * 
-	 * @return the last state of the observed group of lights
+	 * @return the last state of the observed group of lights or null if there
+	 *         is no known history
 	 */
 	public LightState getLastState() {
-		return lastState;
+		return states.size() > 1 ? states.get(1) : null;
 	}
 
 	/**
