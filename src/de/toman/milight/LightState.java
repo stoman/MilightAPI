@@ -106,4 +106,17 @@ public class LightState {
 	public boolean isOn() {
 		return on;
 	}
+
+	/**
+	 * This function checks whether two LightStates represent the same state.
+	 * 
+	 * @param state
+	 *            the state to compare to
+	 * @return true if both LightStates represent the same state, false
+	 *         otherwise
+	 */
+	public boolean equals(LightState state) {
+		return color.equals(state.color) && whiteMode == state.whiteMode
+				&& brightness == state.brightness && on == state.on;
+	}
 }

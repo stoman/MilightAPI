@@ -270,4 +270,28 @@ public class MilightColor {
 	public boolean isColoredMode() {
 		return !isWhiteMode();
 	}
+	
+	/**
+	 * This function checks whether two MilightColors represent the same color
+	 * by comparing their hsb values.
+	 * 
+	 * @param color
+	 *            the color to compare to
+	 * @return true if both MilightColors represent the same color, false
+	 *         otherwise
+	 */
+	public boolean equals(MilightColor color) {
+		boolean equal = true;
+		float[] hsb = getHSB();
+		float[] hsb2 = color.getHSB();
+		
+		//check all hsb values
+		for (int i = 0; i < hsb.length; i++) {
+			if(hsb[i] != hsb2[i]) {
+				equal = false;
+			}
+		}
+		
+		return equal;
+	}
 }
