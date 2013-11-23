@@ -270,7 +270,7 @@ public class MilightColor {
 	public boolean isColoredMode() {
 		return !isWhiteMode();
 	}
-	
+
 	/**
 	 * This function checks whether two MilightColors represent the same color
 	 * by comparing their hsb values.
@@ -281,17 +281,40 @@ public class MilightColor {
 	 *         otherwise
 	 */
 	public boolean equals(MilightColor color) {
+		// find variables
 		boolean equal = true;
 		float[] hsb = getHSB();
 		float[] hsb2 = color.getHSB();
-		
-		//check all hsb values
+
+		// check all hsb values
 		for (int i = 0; i < hsb.length; i++) {
-			if(hsb[i] != hsb2[i]) {
+			if (hsb[i] != hsb2[i]) {
 				equal = false;
 			}
 		}
-		
+
 		return equal;
+	}
+
+	/**
+	 * This function finds colors between two MilightColors. By changing x from
+	 * 0 to 1 the color will turn to the given one smoothly.
+	 * 
+	 * @param target
+	 *            is the color to reach at x=1
+	 * @param x
+	 *            is the influence of the colors (x=0 returns this MilightColor,
+	 *            x=1 returns target)
+	 * @return the newly created MilightColor between the given ones
+	 */
+	public MilightColor getTransition(MilightColor target, float x) {
+		// find variables
+		float[] hsb = getHSB();
+		float[] hsbTarget = target.getHSB();
+
+		// construct new color
+		return new MilightColor(Color.getHSBColor(hsb[0] * (1 - x)
+				+ hsbTarget[0] * x, hsb[1] * (1 - x) + hsbTarget[1] * x, hsb[2]
+				* (1 - x) + hsbTarget[2] * x));
 	}
 }
