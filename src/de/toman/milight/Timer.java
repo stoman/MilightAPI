@@ -1,5 +1,6 @@
 package de.toman.milight;
 
+import java.awt.Color;
 import java.io.IOException;
 
 /**
@@ -24,15 +25,15 @@ public class Timer implements Runnable {
 	private long timeRemaining;
 
 	/**
-	 * The current brightness level of the light (the last one that was send, it
-	 * may be changed by another controller without getting notice).
+	 * The current color of the light (the last one that was send, it may be
+	 * changed by another controller without getting notice).
 	 */
-	private int brightnessLevelCurrent;
+	private MilightColor colorCurrent;
 
 	/**
-	 * The brightness level the lights should have in the end.
+	 * The color the lights should have in the end.
 	 */
-	private int brightnessLevelGoal;
+	private MilightColor colorGoal;
 
 	/**
 	 * True if the lights should be switched off when the countdown has
@@ -92,8 +93,10 @@ public class Timer implements Runnable {
 		// set attributes
 		this.lights = lights;
 		this.timeRemaining = time;
-		this.brightnessLevelCurrent = brightnessLevelStart;
-		this.brightnessLevelGoal = brightnessLevelGoal;
+		this.colorCurrent = new MilightColor(Color.WHITE);
+		this.colorCurrent.setMilightBrightness(brightnessLevelStart);
+		this.colorGoal = new MilightColor(Color.WHITE);
+		this.colorGoal.setMilightBrightness(brightnessLevelGoal);
 		this.switchOff = switchOff;
 
 		// initialize lights
@@ -161,22 +164,19 @@ public class Timer implements Runnable {
 	@Override
 	public void run() {
 		try {
-			while (brightnessLevelCurrent != brightnessLevelGoal
-					&& timeRemaining > 0 && stopped == false) {
+			while (colorCurrent != colorGoal && timeRemaining > 0
+					&& stopped == false) {
 				// compute next values
-				int brightnessLevelNext = brightnessLevelCurrent
-						+ (int) Math.signum(brightnessLevelGoal
-								- brightnessLevelCurrent);
-				long timeToSleep = timeRemaining
-						/ (Math.abs(brightnessLevelGoal
-								- brightnessLevelCurrent) + 1);
+				long timeToSleep = Math.min(5 * 1000, timeRemaining);
+				MilightColor color = colorCurrent.getTransition(colorGoal,
+						timeRemaining / timeToSleep);
 
 				// adjust attributes
-				brightnessLevelCurrent = brightnessLevelNext;
+				colorCurrent = color;
 				timeRemaining -= timeToSleep;
 
 				// send commands
-				lights.brightness(brightnessLevelCurrent);
+				lights.colorAndBrightness(color);
 
 				// sleep
 				Thread.sleep(timeToSleep);
