@@ -47,6 +47,43 @@ public class Timer implements Runnable {
 	private boolean stopped;
 
 	/**
+	 * This constructor creates a new timer that changes the color and brightness of a group of lights during a
+	 * longer time. The timer will not be started immediately, you need to call
+	 * the function {@link Timer#start()} to run the timer.
+	 * 
+	 * @param lights
+	 *            is the group of lights to dim
+	 * @param time
+	 *            is the overall time until the timer should finish in
+	 *            milliseconds
+	 * @param colorStart
+	 *            is color to start with
+	 * @param colorGoal
+	 *            is color the group of lights should have in the
+	 *            end 
+	 * @param switchOff
+	 *            is true if the lights should be switched off after the
+	 *            animation ends
+	 * @throws IOException
+	 *             if the message to the WiFi box could not be sent
+	 */
+	public Timer(Lights lights, long time, MilightColor colorStart,
+			MilightColor colorGoal, boolean switchOff) throws IOException {
+		super();
+
+		// set attributes
+		this.lights = lights;
+		this.timeRemaining = time;
+		this.colorCurrent = colorStart;
+		this.colorGoal = colorGoal;
+		this.switchOff = switchOff;
+
+		// initialize lights
+		lights.on();
+		lights.colorAndBrightness(colorStart);
+	}
+	
+	/**
 	 * This constructor creates a new timer that dims a group of lights during a
 	 * longer time. The timer will not be started immediately, you need to call
 	 * the function {@link Timer#start()} to run the timer.
