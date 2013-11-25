@@ -312,9 +312,18 @@ public class MilightColor {
 		float[] hsb = getHSB();
 		float[] hsbTarget = target.getHSB();
 
+		// make hue value "go the short way" if the values are close to 0 and 1
+		if (hsb[0] - hsbTarget[0] > 0.5) {
+			hsbTarget[0] += 1;
+		}
+		if (hsbTarget[0] - hsb[0] > 0.5) {
+			hsb[0] += 1;
+		}
+
 		// construct new color
-		return new MilightColor(Color.getHSBColor(hsb[0] * (1 - x)
-				+ hsbTarget[0] * x, hsb[1] * (1 - x) + hsbTarget[1] * x, hsb[2]
-				* (1 - x) + hsbTarget[2] * x));
+		return new MilightColor(
+				Color.getHSBColor((hsb[0] * (1 - x) + hsbTarget[0] * x) % 1,
+						hsb[1] * (1 - x) + hsbTarget[1] * x, hsb[2] * (1 - x)
+								+ hsbTarget[2] * x));
 	}
 }
