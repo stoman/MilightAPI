@@ -47,9 +47,23 @@ public class Timer implements Runnable {
 	private boolean stopped;
 
 	/**
-	 * This constructor creates a new timer that changes the color and brightness of a group of lights during a
-	 * longer time. The timer will not be started immediately, you need to call
-	 * the function {@link Timer#start()} to run the timer.
+	 * The amount of time to sleep between two adjustments in milliseconds.
+	 */
+	private int sleepPerCycle;
+
+	/**
+	 * The default amount of time to sleep between two adjustments in
+	 * milliseconds.
+	 */
+	public static final int SLEEP_PER_CYCLE_DEFAULT = 5000;
+
+	/**
+	 * This constructor creates a new timer that changes the color and
+	 * brightness of a group of lights during a longer time. The timer will not
+	 * be started immediately, you need to call the function
+	 * {@link Timer#start()} to run the timer. The amount of time to sleep
+	 * between two adjustments is set to {@link Timer#SLEEP_PER_CYCLE_DEFAULT}.
+	 * You can change it with {@link Timer#setSleepPerCycle(int)}.
 	 * 
 	 * @param lights
 	 *            is the group of lights to dim
@@ -59,8 +73,7 @@ public class Timer implements Runnable {
 	 * @param colorStart
 	 *            is color to start with
 	 * @param colorGoal
-	 *            is color the group of lights should have in the
-	 *            end 
+	 *            is color the group of lights should have in the end
 	 * @param switchOff
 	 *            is true if the lights should be switched off after the
 	 *            animation ends
@@ -77,16 +90,20 @@ public class Timer implements Runnable {
 		this.colorCurrent = colorStart;
 		this.colorGoal = colorGoal;
 		this.switchOff = switchOff;
+		this.sleepPerCycle = SLEEP_PER_CYCLE_DEFAULT;
 
 		// initialize lights
 		lights.on();
 		lights.colorAndBrightness(colorStart);
 	}
-	
+
 	/**
 	 * This constructor creates a new timer that dims a group of lights during a
 	 * longer time. The timer will not be started immediately, you need to call
-	 * the function {@link Timer#start()} to run the timer.
+	 * the function {@link Timer#start()} to run the timer. The amount of time
+	 * to sleep between two adjustments is set to
+	 * {@link Timer#SLEEP_PER_CYCLE_DEFAULT}. You can change it with
+	 * {@link Timer#setSleepPerCycle(int)}.
 	 * 
 	 * @param lights
 	 *            is the group of lights to dim
@@ -135,6 +152,7 @@ public class Timer implements Runnable {
 		this.colorGoal = new MilightColor(Color.WHITE);
 		this.colorGoal.setMilightBrightness(brightnessLevelGoal);
 		this.switchOff = switchOff;
+		this.sleepPerCycle = SLEEP_PER_CYCLE_DEFAULT;
 
 		// initialize lights
 		lights.on();
@@ -145,7 +163,9 @@ public class Timer implements Runnable {
 	 * This constructor creates a new timer that dims a group of lights during a
 	 * longer time and switches the group of lights off in the end. The timer
 	 * will not be started immediately, you need to call the function
-	 * {@link Timer#start()} to run the timer.
+	 * {@link Timer#start()} to run the timer. The amount of time to sleep
+	 * between two adjustments is set to {@link Timer#SLEEP_PER_CYCLE_DEFAULT}.
+	 * You can change it with {@link Timer#setSleepPerCycle(int)}.
 	 * 
 	 * @param lights
 	 *            is the group of lights to dim
@@ -176,7 +196,9 @@ public class Timer implements Runnable {
 	 * This constructor creates a new timer that dims a group of lights from
 	 * full brightness until switched off in the end. The timer will not be
 	 * started immediately, you need to call the function {@link Timer#start()}
-	 * to run the timer.
+	 * to run the timer. The amount of time to sleep between two adjustments is
+	 * set to {@link Timer#SLEEP_PER_CYCLE_DEFAULT}. You can change it with
+	 * {@link Timer#setSleepPerCycle(int)}.
 	 * 
 	 * @param lights
 	 *            is the group of lights to dim
@@ -204,7 +226,7 @@ public class Timer implements Runnable {
 			while (colorCurrent != colorGoal && timeRemaining > 0
 					&& stopped == false) {
 				// compute next values
-				long timeToSleep = Math.min(5 * 1000, timeRemaining);
+				long timeToSleep = Math.min(sleepPerCycle, timeRemaining);
 				MilightColor color = colorCurrent.getTransition(colorGoal,
 						timeRemaining / timeToSleep);
 
@@ -248,5 +270,16 @@ public class Timer implements Runnable {
 	public void start() {
 		stopped = false;
 		new Thread(this).start();
+	}
+
+	/**
+	 * Set the amount of time to sleep between two cycles.
+	 * 
+	 * @param sleepPerCycle
+	 *            is the amount of time to sleep between two cycles in
+	 *            milliseconds.
+	 */
+	public void setSleepPerCycle(int sleepPerCycle) {
+		this.sleepPerCycle = sleepPerCycle;
 	}
 }
