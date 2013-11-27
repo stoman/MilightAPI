@@ -32,6 +32,11 @@ public class Lights {
 	 * The set of all listeners listening for this group of lights.
 	 */
 	private Set<LightListener> lightListeners;
+	
+	/**
+	 * A LightObserver instance storing all states of the group of lights.
+	 */
+	private LightObserver observer;
 
 	/**
 	 * This constructor creates a new group of lights for a given WiFi box.
@@ -174,6 +179,9 @@ public class Lights {
 				notifyLightListeners(event);
 			}
 		});
+		
+		//add observer
+		observer = new LightObserver(this);
 	}
 
 	/**
@@ -548,5 +556,13 @@ public class Lights {
 		for (LightListener listener : lightListeners) {
 			listener.lightsChanged(event);
 		}
+	}
+
+	/**
+	 * This function returns the LightObserver storing all the states of the group of lights.
+	 * @return the LightObserver storing all the states of the group of lights
+	 */
+	public LightObserver getObserver() {
+		return observer;
 	}
 }
