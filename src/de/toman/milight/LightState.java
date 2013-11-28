@@ -1,5 +1,8 @@
 package de.toman.milight;
 
+import java.awt.Color;
+import java.io.IOException;
+
 public class LightState {
 	/**
 	 * The color which is currently display by the group of lights if the lights
@@ -118,5 +121,32 @@ public class LightState {
 	public boolean equals(LightState state) {
 		return color.equals(state.color) && whiteMode == state.whiteMode
 				&& brightness == state.brightness && on == state.on;
+	}
+
+	/**
+	 * This function restores the state represented by this instance to a group
+	 * of lights. Depending on the state, the group of lights is switched to
+	 * colored resp. white mode and brightness/hue are adjusted.
+	 * 
+	 * @param lights
+	 *            is the group of lights to be adjusted
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	public void restore(Lights lights) throws IOException {
+		// white mode
+		if (whiteMode) {
+			// create color
+			MilightColor whiteColor = new MilightColor(Color.WHITE);
+			whiteColor.setBrightness(brightness);
+
+			// set color
+			lights.white();
+			lights.brightness(whiteColor.getMilightBrightness());
+		}
+		// colored mode
+		else {
+			lights.colorAndBrightness(color, true);
+		}
 	}
 }

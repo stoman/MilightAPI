@@ -1,6 +1,8 @@
 package de.toman.milight;
 
 import java.awt.Color;
+import java.io.IOException;
+import java.util.EmptyStackException;
 import java.util.Stack;
 
 import de.toman.milight.events.ChangeBrightnessEvent;
@@ -171,9 +173,39 @@ public class LightObserver {
 	 * 
 	 * @return the last state of the observed group of lights or null if there
 	 *         is no known history
+	 * @throws EmptyStackException
+	 *             if the stack of states is empty
 	 */
-	public LightState getLastState() {
-		return states.size() > 1 ? states.get(1) : null;
+	public LightState getLastState() throws EmptyStackException {
+		// check whether the stack is empty
+		if (states.size() == 0) {
+			throw new EmptyStackException();
+		}
+
+		// find return value
+		return states.get(1);
+	}
+
+	/**
+	 * This function removes the youngest state from the stack and restores it
+	 * to the group of lights observerd by this instance.
+	 * 
+	 * @throws IOException
+	 *             if the message to the WiFiBox could not be sent
+	 * @throws EmptyStackException
+	 *             if the stack of states is empty
+	 */
+	public void restore() throws IOException, EmptyStackException {
+		// check whether the stack is empty
+		if (states.size() == 0) {
+			throw new EmptyStackException();
+		}
+
+		// remove first state
+		LightState state = states.pop();
+
+		// set state
+		state.restore(lights);
 	}
 
 	/**
