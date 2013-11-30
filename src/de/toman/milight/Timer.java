@@ -2,6 +2,12 @@ package de.toman.milight;
 
 import java.awt.Color;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+
+import de.toman.milight.events.LightEvent;
+import de.toman.milight.events.LightListener;
+import de.toman.milight.events.TimerListener;
 
 /**
  * This class dims a group of lights over time from one brightness level to
@@ -47,6 +53,11 @@ public class Timer implements Runnable {
 	private boolean stopped;
 
 	/**
+	 * The set of all TimerListeners observing this instance.
+	 */
+	private Set<TimerListener> timerListeners;
+
+	/**
 	 * The amount of time to sleep between two adjustments in milliseconds.
 	 */
 	private int sleepPerCycle;
@@ -90,6 +101,7 @@ public class Timer implements Runnable {
 		this.colorCurrent = colorStart;
 		this.colorGoal = colorGoal;
 		this.switchOff = switchOff;
+		this.timerListeners = new HashSet<TimerListener>();
 		this.sleepPerCycle = SLEEP_PER_CYCLE_DEFAULT;
 
 		// initialize lights
@@ -152,6 +164,7 @@ public class Timer implements Runnable {
 		this.colorGoal = new MilightColor(Color.WHITE);
 		this.colorGoal.setMilightBrightness(brightnessLevelGoal);
 		this.switchOff = switchOff;
+		this.timerListeners = new HashSet<TimerListener>();
 		this.sleepPerCycle = SLEEP_PER_CYCLE_DEFAULT;
 
 		// initialize lights
@@ -250,6 +263,8 @@ public class Timer implements Runnable {
 		} catch (InterruptedException e) {
 			// exception while sleeping
 			stop();
+		} finally {
+			notifyTimerListeners();
 		}
 
 	}
@@ -281,5 +296,37 @@ public class Timer implements Runnable {
 	 */
 	public void setSleepPerCycle(int sleepPerCycle) {
 		this.sleepPerCycle = sleepPerCycle;
+	}
+
+	/**
+	 * Use this function to add a new listener to the timer. Listeners will be
+	 * notified when the timer has finished its animation.
+	 * 
+	 * @param listener
+	 *            is the listener to add
+	 */
+	public void addTimerListener(TimerListener listener) {
+		timerListeners.add(listener);
+	}
+
+	/**
+	 * This function removes a listener from this timer which was added before
+	 * by {@link Timer#addTimerListener(TimerListener)}.
+	 * 
+	 * @param listener
+	 *            is the listener to remove
+	 */
+	public void removeTimerListener(TimerListener listener) {
+		timerListeners.remove(listener);
+	}
+
+	/**
+	 * This function notifies all TimerListeners listening on this group of
+	 * lights.
+	 */
+	private void notifyTimerListeners() {
+		for (TimerListener listener : timerListeners) {
+			listener.timerReady();
+		}
 	}
 }
