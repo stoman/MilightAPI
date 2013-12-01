@@ -477,8 +477,8 @@ public class Lights {
 						color(color, true);
 						Thread.sleep(colorTime);
 
-						// white mode
-						white();
+						// switch back
+						observer.restore();
 						Thread.sleep(whiteTime);
 					}
 				} catch (IOException e) {

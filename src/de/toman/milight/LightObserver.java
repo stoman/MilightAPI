@@ -52,7 +52,7 @@ public class LightObserver {
 	 * switched on.
 	 */
 	private static final boolean INITIAL_ON = false;
-
+	
 	/**
 	 * This constructor creates a new LightOberserver storing the current and
 	 * last state of a given group of lights. The state will be recorded
@@ -73,9 +73,17 @@ public class LightObserver {
 
 		// add as listener
 		lights.addLightListener(new LightListener() {
+			long lastEvent = 0;
+			
 			public void lightsChanged(LightEvent event) {
-				// ChangeColorEvent
+				// remove last state if there was a call to this function in the last second
+				if(System.currentTimeMillis() - lastEvent < 3 * WiFiBox.MIN_SLEEP_BETWEEN_MESSAGES) {
+					states.pop();
+				}
+				lastEvent = System.currentTimeMillis();
+				
 				switch (event.getClass().getSimpleName()) {
+				// ChangeColorEvent
 				case "ChangeColorEvent":
 					setCurrentState(new LightState(((ChangeColorEvent) event)
 							.getColor(), getCurrentState().getBrightness(),
