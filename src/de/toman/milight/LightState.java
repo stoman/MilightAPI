@@ -149,4 +149,15 @@ public class LightState {
 			lights.colorAndBrightness(color, true);
 		}
 	}
+
+	/**
+	 * This function describes the objet as a string. Use this for debugging.
+	 * 
+	 * @returns a string description of the instance
+	 */
+	public String toString() {
+		return String.format(
+				"[on: %b, whiteMode: %b, brightness: %f, color: %s]", on,
+				whiteMode, brightness, color.toString());
+	}
 }

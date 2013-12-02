@@ -326,4 +326,14 @@ public class MilightColor {
 						hsb[1] * (1 - x) + hsbTarget[1] * x, hsb[2] * (1 - x)
 								+ hsbTarget[2] * x));
 	}
+
+	/**
+	 * This function describes the objet as a string. Use this for debugging.
+	 * 
+	 * @returns a string description of the instance
+	 */
+	public String toString() {
+		return String.format("[hue: %f, brightness: %f, saturation: %f]",
+				getHue(), getBrightness(), getSaturation());
+	}
 }
