@@ -64,7 +64,7 @@ public class Timer implements Runnable {
 	 * The default amount of time to sleep between two adjustments in
 	 * milliseconds.
 	 */
-	public static final int SLEEP_PER_CYCLE_DEFAULT = 5000;
+	public static final int SLEEP_PER_CYCLE_DEFAULT = 2000;
 
 	/**
 	 * This constructor creates a new timer that changes the color and
@@ -239,7 +239,8 @@ public class Timer implements Runnable {
 				// compute next values
 				long timeToSleep = Math.min(sleepPerCycle, timeRemaining);
 				MilightColor color = colorCurrent.getTransition(colorGoal,
-						timeRemaining / timeToSleep);
+						(float) timeToSleep / timeRemaining);
+				System.out.println(color);
 
 				// adjust attributes
 				colorCurrent = color;
