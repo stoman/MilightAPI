@@ -52,7 +52,7 @@ public class LightObserver {
 	 * switched on.
 	 */
 	private static final boolean INITIAL_ON = false;
-	
+
 	/**
 	 * This constructor creates a new LightOberserver storing the current and
 	 * last state of a given group of lights. The state will be recorded
@@ -74,68 +74,65 @@ public class LightObserver {
 		// add as listener
 		lights.addLightListener(new LightListener() {
 			long lastEvent = 0;
-			
+
 			public void lightsChanged(LightEvent event) {
-				// remove last state if there was a call to this function in the last second
-				if(System.currentTimeMillis() - lastEvent < 3 * WiFiBox.MIN_SLEEP_BETWEEN_MESSAGES) {
+				LightState currentState = getCurrentState();
+
+				// remove last state if there was a call to this function in the
+				// last second
+				if (System.currentTimeMillis() - lastEvent < 3 * WiFiBox.MIN_SLEEP_BETWEEN_MESSAGES) {
 					states.pop();
 				}
 				lastEvent = System.currentTimeMillis();
-				
+
 				switch (event.getClass().getSimpleName()) {
 				// ChangeColorEvent
 				case "ChangeColorEvent":
 					setCurrentState(new LightState(((ChangeColorEvent) event)
-							.getColor(), getCurrentState().getBrightness(),
-							getCurrentState().isWhiteMode(), states
-									.firstElement().isOn()));
+							.getColor(), currentState.getBrightness(),
+							currentState.isWhiteMode(), currentState.isOn()));
 					break;
 				// ChangeBrightnessEvent
 				case "ChangeBrightnessEvent":
-					if (getCurrentState().isWhiteMode()) {
+					if (currentState.isWhiteMode()) {
 						// white mode
-						setCurrentState(new LightState(getCurrentState()
-								.getColor(), ((ChangeBrightnessEvent) event)
-								.getBrightness(), getCurrentState()
-								.isWhiteMode(), getCurrentState().isOn()));
+						setCurrentState(new LightState(
+								currentState.getColor(),
+								((ChangeBrightnessEvent) event).getBrightness(),
+								currentState.isWhiteMode(), currentState.isOn()));
 					} else {
 						// colored mode
-						MilightColor color = getCurrentState().getColor();
+						MilightColor color = currentState.getColor();
 						color.setBrightness(((ChangeBrightnessEvent) event)
 								.getBrightness());
-						setCurrentState(new LightState(color, states
-								.firstElement().getBrightness(), states
-								.firstElement().isWhiteMode(), states
-								.firstElement().isOn()));
+						setCurrentState(new LightState(color, currentState
+								.getBrightness(), currentState.isWhiteMode(),
+								currentState.isOn()));
 
 					}
 					break;
 				// ColoredModeEvent
 				case "ColoredModeEvent":
-					setCurrentState(new LightState(
-							getCurrentState().getColor(), getCurrentState()
-									.getBrightness(), false, getCurrentState()
+					setCurrentState(new LightState(currentState.getColor(),
+							currentState.getBrightness(), false, currentState
 									.isOn()));
 					break;
 				// WhiteModeEvent
 				case "WhiteModeEvent":
-					setCurrentState(new LightState(
-							getCurrentState().getColor(), getCurrentState()
-									.getBrightness(), true, getCurrentState()
+					setCurrentState(new LightState(currentState.getColor(),
+							currentState.getBrightness(), true, currentState
 									.isOn()));
 					break;
 				// SwitchOnEvent
 				case "SwitchOnEvent":
-					setCurrentState(new LightState(
-							getCurrentState().getColor(), getCurrentState()
-									.getBrightness(), getCurrentState()
+					setCurrentState(new LightState(currentState.getColor(),
+							currentState.getBrightness(), currentState
 									.isWhiteMode(), true));
 					break;
 				// SwitchOffEvent
 				case "SwitchOffEvent":
-					setCurrentState(new LightState(
-							getCurrentState().getColor(), getCurrentState()
-									.getBrightness(), getCurrentState()
+					setCurrentState(new LightState(currentState.getColor(),
+							currentState.getBrightness(), currentState
 									.isWhiteMode(), false));
 					break;
 				}
@@ -170,7 +167,7 @@ public class LightObserver {
 	 *            .firstElement() the new state of the group of lights
 	 */
 	private void setCurrentState(LightState state) {
-		if (!state.equals(getCurrentState())) {
+		if (states.isEmpty() || !state.equals(getCurrentState())) {
 			states.add(state);
 		}
 	}
