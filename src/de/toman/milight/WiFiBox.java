@@ -50,6 +50,14 @@ public class WiFiBox {
 	private int activeGroup;
 
 	/**
+	 * An array containing references to Lights instances for all groups of
+	 * lights connected to this WiFiBox. They are not created on the fly to
+	 * avoid creating duplicate instances. Entry 0 corresponds to group 1 and so
+	 * on.
+	 */
+	private Lights[] lights;
+
+	/**
 	 * The default port for unconfigured boxes.
 	 */
 	public static final int DEFAULT_PORT = 8899;
@@ -69,18 +77,22 @@ public class WiFiBox {
 	 * The command code for "GROUP 1 ALL OFF".
 	 */
 	public static final int COMMAND_GROUP_1_OFF = 0x46;
+
 	/**
 	 * The command code for "GROUP 2 ALL OFF".
 	 */
 	public static final int COMMAND_GROUP_2_OFF = 0x48;
+
 	/**
 	 * The command code for "GROUP 3 ALL OFF".
 	 */
 	public static final int COMMAND_GROUP_3_OFF = 0x4A;
+
 	/**
 	 * The command code for "GROUP 4 ALL OFF".
 	 */
 	public static final int COMMAND_GROUP_4_OFF = 0x4C;
+
 	/**
 	 * The command code for "RGBW COLOR LED ALL ON".
 	 */
@@ -184,6 +196,12 @@ public class WiFiBox {
 		for (int i = 0; i < 4; i++) {
 			lightListeners[i] = new HashSet<LightListener>();
 		}
+
+		// create lights
+		lights = new Lights[4];
+		for (int group = 1; group <= 4; group++) {
+			lights[group - 1] = new Lights(this, group);
+		}
 	}
 
 	/**
@@ -247,7 +265,7 @@ public class WiFiBox {
 		}
 
 		// create new instance
-		return new Lights(this, group);
+		return lights[group - 1];
 	}
 
 	/**
