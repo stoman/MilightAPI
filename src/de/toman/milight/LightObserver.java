@@ -76,65 +76,69 @@ public class LightObserver {
 			long lastEvent = 0;
 
 			public void lightsChanged(LightEvent event) {
-				LightState currentState = getCurrentState();
+				synchronized (states) {
+					LightState currentState = getCurrentState();
 
-				// remove last state if there was a call to this function in the
-				// last second
-				if (System.currentTimeMillis() - lastEvent < 3 * WiFiBox.MIN_SLEEP_BETWEEN_MESSAGES) {
-					states.pop();
-				}
-				lastEvent = System.currentTimeMillis();
-
-				switch (event.getClass().getSimpleName()) {
-				// ChangeColorEvent
-				case "ChangeColorEvent":
-					setCurrentState(new LightState(((ChangeColorEvent) event)
-							.getColor(), currentState.getBrightness(),
-							currentState.isWhiteMode(), currentState.isOn()));
-					break;
-				// ChangeBrightnessEvent
-				case "ChangeBrightnessEvent":
-					if (currentState.isWhiteMode()) {
-						// white mode
-						setCurrentState(new LightState(
-								currentState.getColor(),
-								((ChangeBrightnessEvent) event).getBrightness(),
-								currentState.isWhiteMode(), currentState.isOn()));
-					} else {
-						// colored mode
-						MilightColor color = currentState.getColor();
-						color.setBrightness(((ChangeBrightnessEvent) event)
-								.getBrightness());
-						setCurrentState(new LightState(color, currentState
-								.getBrightness(), currentState.isWhiteMode(),
-								currentState.isOn()));
-
+					// remove last state if there was a call to this function in
+					// the last second
+					if (System.currentTimeMillis() - lastEvent < 3 * WiFiBox.MIN_SLEEP_BETWEEN_MESSAGES) {
+						states.pop();
 					}
-					break;
-				// ColoredModeEvent
-				case "ColoredModeEvent":
-					setCurrentState(new LightState(currentState.getColor(),
-							currentState.getBrightness(), false, currentState
-									.isOn()));
-					break;
-				// WhiteModeEvent
-				case "WhiteModeEvent":
-					setCurrentState(new LightState(currentState.getColor(),
-							currentState.getBrightness(), true, currentState
-									.isOn()));
-					break;
-				// SwitchOnEvent
-				case "SwitchOnEvent":
-					setCurrentState(new LightState(currentState.getColor(),
-							currentState.getBrightness(), currentState
-									.isWhiteMode(), true));
-					break;
-				// SwitchOffEvent
-				case "SwitchOffEvent":
-					setCurrentState(new LightState(currentState.getColor(),
-							currentState.getBrightness(), currentState
-									.isWhiteMode(), false));
-					break;
+					lastEvent = System.currentTimeMillis();
+
+					switch (event.getClass().getSimpleName()) {
+					// ChangeColorEvent
+					case "ChangeColorEvent":
+						setCurrentState(new LightState(
+								((ChangeColorEvent) event).getColor(),
+								currentState.getBrightness(), currentState
+										.isWhiteMode(), currentState.isOn()));
+						break;
+					// ChangeBrightnessEvent
+					case "ChangeBrightnessEvent":
+						if (currentState.isWhiteMode()) {
+							// white mode
+							setCurrentState(new LightState(currentState
+									.getColor(),
+									((ChangeBrightnessEvent) event)
+											.getBrightness(), currentState
+											.isWhiteMode(), currentState.isOn()));
+						} else {
+							// colored mode
+							MilightColor color = currentState.getColor();
+							color.setBrightness(((ChangeBrightnessEvent) event)
+									.getBrightness());
+							setCurrentState(new LightState(color, currentState
+									.getBrightness(), currentState
+									.isWhiteMode(), currentState.isOn()));
+
+						}
+						break;
+					// ColoredModeEvent
+					case "ColoredModeEvent":
+						setCurrentState(new LightState(currentState.getColor(),
+								currentState.getBrightness(), false,
+								currentState.isOn()));
+						break;
+					// WhiteModeEvent
+					case "WhiteModeEvent":
+						setCurrentState(new LightState(currentState.getColor(),
+								currentState.getBrightness(), true,
+								currentState.isOn()));
+						break;
+					// SwitchOnEvent
+					case "SwitchOnEvent":
+						setCurrentState(new LightState(currentState.getColor(),
+								currentState.getBrightness(), currentState
+										.isWhiteMode(), true));
+						break;
+					// SwitchOffEvent
+					case "SwitchOffEvent":
+						setCurrentState(new LightState(currentState.getColor(),
+								currentState.getBrightness(), currentState
+										.isWhiteMode(), false));
+						break;
+					}
 				}
 			}
 		});
