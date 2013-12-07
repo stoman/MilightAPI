@@ -32,7 +32,7 @@ public class Lights {
 	 * The set of all listeners listening for this group of lights.
 	 */
 	private Set<LightListener> lightListeners;
-	
+
 	/**
 	 * A LightObserver instance storing all states of the group of lights.
 	 */
@@ -48,7 +48,8 @@ public class Lights {
 	 * @throws IllegalArgumentException
 	 *             if the group number is not between 1 and 4
 	 */
-	public Lights(WiFiBox wifiBox, int group) throws IllegalArgumentException {
+	protected Lights(WiFiBox wifiBox, int group)
+			throws IllegalArgumentException {
 		super();
 		this.wifiBox = wifiBox;
 		initialize(group);
@@ -72,7 +73,7 @@ public class Lights {
 	 * @see WiFiBox#getLights(int) to get another group of lights for the same
 	 *      WiFi box
 	 */
-	public Lights(InetAddress address, int port, int group) {
+	protected Lights(InetAddress address, int port, int group) {
 		super();
 		wifiBox = new WiFiBox(address, port);
 		initialize(group);
@@ -94,7 +95,7 @@ public class Lights {
 	 * @see WiFiBox#getLights(int) to get another group of lights for the same
 	 *      WiFi box
 	 */
-	public Lights(InetAddress address, int group) {
+	protected Lights(InetAddress address, int group) {
 		super();
 		wifiBox = new WiFiBox(address);
 		initialize(group);
@@ -121,7 +122,8 @@ public class Lights {
 	 * @see WiFiBox#getLights(int) to get another group of lights for the same
 	 *      WiFi box
 	 */
-	public Lights(String host, int port, int group) throws UnknownHostException {
+	protected Lights(String host, int port, int group)
+			throws UnknownHostException {
 		super();
 		wifiBox = new WiFiBox(host, port);
 		initialize(group);
@@ -146,7 +148,7 @@ public class Lights {
 	 * @see WiFiBox#getLights(int) to get another group of lights for the same
 	 *      WiFi box
 	 */
-	public Lights(String host, int group) throws UnknownHostException {
+	protected Lights(String host, int group) throws UnknownHostException {
 		super();
 		wifiBox = new WiFiBox(host);
 		initialize(group);
@@ -179,8 +181,8 @@ public class Lights {
 				notifyLightListeners(event);
 			}
 		});
-		
-		//add observer
+
+		// add observer
 		observer = new LightObserver(this);
 	}
 
@@ -559,7 +561,9 @@ public class Lights {
 	}
 
 	/**
-	 * This function returns the LightObserver storing all the states of the group of lights.
+	 * This function returns the LightObserver storing all the states of the
+	 * group of lights.
+	 * 
 	 * @return the LightObserver storing all the states of the group of lights
 	 */
 	public LightObserver getObserver() {
