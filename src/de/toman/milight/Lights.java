@@ -13,7 +13,9 @@ import de.toman.milight.events.LightListener;
 /**
  * This class represents a group of LED light bulbs that are connected to a WiFi
  * box using the same group. These groups can be controlled individually, it is
- * also possible to mix groups belonging to different WiFi boxes.
+ * also possible to mix groups belonging to different WiFi boxes. To create a
+ * new Lights instance create a {@link WiFiBox} instance and call
+ * {@link WiFiBox#getLights(int)}.
  * 
  * @author Stefan Toman (toman@tum.de)
  */
