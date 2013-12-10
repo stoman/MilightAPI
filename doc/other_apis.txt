@@ -1,0 +1,2 @@
+Dresden Elektronik
+https://github.com/dresden-elektronik/deconz-rest-plugin
