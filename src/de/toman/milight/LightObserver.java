@@ -34,7 +34,7 @@ public class LightObserver {
 	 * The color to use when the current color is unknown.
 	 */
 	private static final MilightColor INITIAL_COLOR = new MilightColor(
-			Color.WHITE);
+			new Color(Color.HSBtoRGB(0.0f, 1.0f, 1.0f)));
 
 	/**
 	 * The brightness value to use when the current brightness value is unknown.
@@ -76,6 +76,7 @@ public class LightObserver {
 			long lastEvent = 0;
 
 			public void lightsChanged(LightEvent event) {
+				
 				synchronized (states) {
 					LightState currentState = getCurrentState();
 
@@ -150,7 +151,7 @@ public class LightObserver {
 	 * @return the current state of the observed group of lights
 	 */
 	public LightState getCurrentState() {
-		return states.firstElement();
+		return states.lastElement();
 	}
 
 	/**
