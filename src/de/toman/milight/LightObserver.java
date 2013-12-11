@@ -226,4 +226,18 @@ public class LightObserver {
 	public Lights getLights() {
 		return lights;
 	}
+	
+	/**
+	 * This function describes the objet as a string. Use this for debugging.
+	 * 
+	 * @returns a string description of the instance
+	 */
+	public String toString() {
+		String ret = "[LightObserver for: "+lights.toString()+", states: [";
+		for (LightState state: states) {
+			ret += "\n\t"+state.toString();
+		}
+		ret += "\n]]";
+		return ret;
+	}
 }
