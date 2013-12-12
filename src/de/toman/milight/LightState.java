@@ -157,7 +157,7 @@ public class LightState {
 	 */
 	public String toString() {
 		return String.format(
-				"[on: %b, whiteMode: %b, brightness: %f, color: %s]", on,
+				"[LightState, on: %b, whiteMode: %b, brightness: %f, color: %s]", on,
 				whiteMode, brightness, color.toString());
 	}
 }

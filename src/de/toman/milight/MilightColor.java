@@ -333,7 +333,7 @@ public class MilightColor {
 	 * @returns a string description of the instance
 	 */
 	public String toString() {
-		return String.format("[hue: %f, brightness: %f, saturation: %f]",
+		return String.format("[MilightColor, hue: %f, brightness: %f, saturation: %f]",
 				getHue(), getBrightness(), getSaturation());
 	}
 }

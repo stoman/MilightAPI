@@ -233,7 +233,7 @@ public class LightObserver {
 	 * @returns a string description of the instance
 	 */
 	public String toString() {
-		String ret = "[LightObserver for: "+lights.toString()+", states: [";
+		String ret = "[LightObserver, lights: "+lights.toString()+", states: [";
 		for (LightState state: states) {
 			ret += "\n\t"+state.toString();
 		}

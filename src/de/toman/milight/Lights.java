@@ -571,4 +571,14 @@ public class Lights {
 	public LightObserver getObserver() {
 		return observer;
 	}
+	
+	/**
+	 * This function describes the objet as a string. Use this for debugging.
+	 * 
+	 * @returns a string description of the instance
+	 */
+	public String toString() {
+		return String.format("[Lights, group: %d, WiFiBox:\n\t%s\n]",
+				group, wifiBox.toString());
+	}
 }

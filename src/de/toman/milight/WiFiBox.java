@@ -1266,4 +1266,14 @@ public class WiFiBox {
 	public int getActiveGroup() {
 		return activeGroup;
 	}
+
+	/**
+	 * This function describes the objet as a string. Use this for debugging.
+	 * 
+	 * @returns a string description of the instance
+	 */
+	public String toString() {
+		return String.format("[WiFiBox, address: %s, port: %d, activeGroup: %d]",
+				address.toString(), port, activeGroup);
+	}
 }
