@@ -578,7 +578,7 @@ public class Lights {
 	 * @returns a string description of the instance
 	 */
 	public String toString() {
-		return String.format("[Lights, group: %d, WiFiBox:\n\t%s\n]",
-				group, wifiBox.toString());
+		return String.format("[Lights, group: %d, WiFiBox:\n\t%s,\nobserver: %s]",
+				group, wifiBox.toString(), observer.toString());
 	}
 }
