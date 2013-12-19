@@ -1,2 +1,3 @@
 Dresden Elektronik
 https://github.com/dresden-elektronik/deconz-rest-plugin
+Probably not compatible as not listed at http://www.zigbee.org/Products/ByStandard/ZigBeeLightLink.aspx
