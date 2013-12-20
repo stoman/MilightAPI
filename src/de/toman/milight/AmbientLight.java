@@ -23,6 +23,7 @@ public class AmbientLight implements Runnable {
 	/**
 	 * The group of lights to be controlled by the ambient light.
 	 */
+
 	private Lights lights;
 
 	/**
@@ -220,5 +221,15 @@ public class AmbientLight implements Runnable {
 	public void start() {
 		stopped = false;
 		new Thread(this).start();
+	}
+
+	/**
+	 * This function describes the objet as a string. Use this for debugging.
+	 * 
+	 * @returns a string description of the instance
+	 */
+	public String toString() {
+		return String.format("[AmbientLight, lights: %s, sleepInterval: %f]",
+				lights.toString(), sleepInterval);
 	}
 }
