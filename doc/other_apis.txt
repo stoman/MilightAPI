@@ -1,3 +1,6 @@
 Dresden Elektronik
 https://github.com/dresden-elektronik/deconz-rest-plugin
 Probably not compatible as not listed at http://www.zigbee.org/Products/ByStandard/ZigBeeLightLink.aspx
+
+Java Sound API
+http://docs.oracle.com/javase/7/docs/technotes/guides/sound/programmer_guide/contents.html
