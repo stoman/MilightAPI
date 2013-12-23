@@ -1,6 +1,9 @@
 package de.toman.milight;
 
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.TargetDataLine;
+import javax.sound.sampled.Mixer.Info;
 
 /**
  * With this class you can visualize your music using some group of lights. The
@@ -49,5 +52,46 @@ public class MusicVisualizer {
 	 */
 	public TargetDataLine getLine() {
 		return line;
+	}
+
+	/**
+	 * This function returns the default line to listen on. It is searching for
+	 * a mixer called "Primary Sound Capture Driver" or returns some line if
+	 * none is found with this none. If there is no available line at all it
+	 * will return null.
+	 * 
+	 * @return the line or null if no line is available
+	 */
+	public static TargetDataLine getDefaultLine() {
+		// search for "Primary Sound Capture Driver"
+		for (Info mixerInfo : AudioSystem.getMixerInfo()) {
+			javax.sound.sampled.Line.Info[] lineInfos = AudioSystem.getMixer(
+					mixerInfo).getTargetLineInfo();
+			try {
+				if (lineInfos.length > 0
+						&& mixerInfo.getName().equals(
+								"Primary Sound Capture Driver")) {
+					return (TargetDataLine) AudioSystem.getLine(lineInfos[0]);
+				}
+			} catch (LineUnavailableException e) {
+				// line unavailable -> ignore mixer
+			}
+		}
+
+		// search for some other mixer
+		for (Info mixerInfo : AudioSystem.getMixerInfo()) {
+			javax.sound.sampled.Line.Info[] lineInfos = AudioSystem.getMixer(
+					mixerInfo).getTargetLineInfo();
+			try {
+				if (lineInfos.length > 0) {
+					return (TargetDataLine) AudioSystem.getLine(lineInfos[0]);
+				}
+			} catch (LineUnavailableException e) {
+				// line unavailable -> ignore mixer
+			}
+		}
+
+		// no line found at all
+		return null;
 	}
 }
