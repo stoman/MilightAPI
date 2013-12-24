@@ -105,22 +105,43 @@ public class MusicVisualizer {
 	 * {@link MusicVisualizer#line} attribute.
 	 * 
 	 * @param data
-	 *            is the array of values to converted
+	 *            is an array containing the values to be converted
+	 * @param offset
+	 *            is the number of bytes to skip
+	 * @param length
+	 *            is the number of bytes to read
 	 * @return is the integer represented by the byte array
 	 */
-	public BigInteger convertByteArrayToInteger(byte[] data) {
+	public BigInteger convertByteArrayToInteger(byte[] data, int offset,
+			int length) {
 		// create variables
 		BigInteger ret = BigInteger.ZERO;
 		BigInteger power = BigInteger.valueOf(256);
 
 		// read all parts
-		for (int i = 0; i < data.length; i++) {
-			ret = ret.multiply(power).add(
-					BigInteger.valueOf(data[line.getFormat().isBigEndian() ? i
-							: (data.length - 1 - i)] & 0xff));
+		for (int i = 0; i < length; i++) {
+			ret = ret
+					.multiply(power)
+					.add(BigInteger
+							.valueOf(data[line.getFormat().isBigEndian() ? (i + offset)
+									: (offset + length - 1 - i)] & 0xff));
 		}
 
 		// return
 		return ret;
+	}
+
+	/**
+	 * This function converts a raw array of bytes to an integer value. It will
+	 * be converted in the corresponding way to the
+	 * {@link AudioFormat#isBigEndian()} value of the
+	 * {@link MusicVisualizer#line} attribute.
+	 * 
+	 * @param data
+	 *            is the array of values to be converted
+	 * @return is the integer represented by the byte array
+	 */
+	public BigInteger convertByteArrayToInteger(byte[] data) {
+		return convertByteArrayToInteger(data, 0, data.length);
 	}
 }
