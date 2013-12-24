@@ -1,9 +1,12 @@
 package de.toman.milight;
 
+import java.math.BigInteger;
+
+import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.TargetDataLine;
 import javax.sound.sampled.Mixer.Info;
+import javax.sound.sampled.TargetDataLine;
 
 /**
  * With this class you can visualize your music using some group of lights. The
@@ -93,5 +96,31 @@ public class MusicVisualizer {
 
 		// no line found at all
 		return null;
+	}
+
+	/**
+	 * This function converts a raw array of bytes to an integer value. It will
+	 * be converted in the corresponding way to the
+	 * {@link AudioFormat#isBigEndian()} value of the
+	 * {@link MusicVisualizer#line} attribute.
+	 * 
+	 * @param data
+	 *            is the array of values to converted
+	 * @return is the integer represented by the byte array
+	 */
+	public BigInteger convertByteArrayToInteger(byte[] data) {
+		// create variables
+		BigInteger ret = BigInteger.ZERO;
+		BigInteger power = BigInteger.valueOf(256);
+
+		// read all parts
+		for (int i = 0; i < data.length; i++) {
+			ret = ret.multiply(power).add(
+					BigInteger.valueOf(data[line.getFormat().isBigEndian() ? i
+							: (data.length - 1 - i)] & 0xff));
+		}
+
+		// return
+		return ret;
 	}
 }
