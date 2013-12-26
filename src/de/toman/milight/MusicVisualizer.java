@@ -14,7 +14,7 @@ import javax.sound.sampled.TargetDataLine;
  * 
  * @author Stefan Toman (toman@tum.de)
  */
-public class MusicVisualizer {
+public class MusicVisualizer implements Runnable {
 	/**
 	 * The group of lights controlled by this visualizer
 	 */
@@ -24,6 +24,11 @@ public class MusicVisualizer {
 	 * The line to read the music input from.
 	 */
 	private TargetDataLine line;
+
+	/**
+	 * True if the thread should stop and not send any more commands.
+	 */
+	private boolean stopped;
 
 	/**
 	 * This constructor creates a new visualizer.
@@ -143,5 +148,49 @@ public class MusicVisualizer {
 	 */
 	public BigInteger convertByteArrayToInteger(byte[] data) {
 		return convertByteArrayToInteger(data, 0, data.length);
+	}
+
+	/**
+	 * This function runs the visualizer with the settings given in the constructor
+	 * resp. setters. Use the function start to run this in a seperate thread.
+	 * 
+	 * @see MusicVisualizer#start()
+	 */
+	@Override
+	public void run() {
+		try {
+			while (stopped == false) {
+				// TODO
+
+				// sleep
+				Thread.sleep(100);
+			}
+			/*
+			 * } catch (IOException e) { // exception while communicating with
+			 * the lights
+			 * stop();
+			 */
+		} catch (InterruptedException e) {
+			// exception while sleeping
+			stop();
+		}
+	}
+
+	/**
+	 * This function stops the thread running the visualizer. The visualizer can
+	 * be resumed where it was interrupted by calling start again.
+	 * 
+	 * @see MusicVisualizer#start()
+	 */
+	public void stop() {
+		stopped = true;
+	}
+
+	/**
+	 * This function starts the visualizer in a new thread.
+	 */
+	public void start() {
+		stopped = false;
+		new Thread(this).start();
 	}
 }
