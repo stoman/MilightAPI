@@ -1,4 +1,4 @@
-# Milight API
+# MiLight API
 
 This is an API for [MiLight light bulbs](http://www.milight.com/) written in
 Java. Other brands of light bulbs are also compatible, for instance
@@ -95,7 +95,7 @@ vis.stop();
 ## Timer
 
 There is a timer available to fade from one color or brightness to another
-or switch the lights off after a certan amount of time. Timers can be used
+or switch the lights off after a certain amount of time. Timers can be used
 like this:
 
 ```
@@ -139,6 +139,6 @@ timer has finished its animation.
 
 ## Author
 
-this library is written by [Stefan Toman](https://github.com/stoman) and
+This library is written by [Stefan Toman](https://github.com/stoman) and
 available under the [MIT
 license](https://github.com/stoman/MilightAPI/blob/develop/LICENSE).
