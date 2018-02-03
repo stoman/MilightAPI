@@ -1,10 +1,25 @@
 package de.toman.milight;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashSet;
+import java.util.Set;
+
+import de.toman.milight.events.ChangeBrightnessEvent;
+import de.toman.milight.events.ChangeColorEvent;
+import de.toman.milight.events.ColoredModeEvent;
+import de.toman.milight.events.DiscoModeEvent;
+import de.toman.milight.events.DiscoModeFasterEvent;
+import de.toman.milight.events.DiscoModeSlowerEvent;
+import de.toman.milight.events.LightEvent;
+import de.toman.milight.events.LightListener;
+import de.toman.milight.events.SwitchOffEvent;
+import de.toman.milight.events.SwitchOnEvent;
+import de.toman.milight.events.WhiteModeEvent;
 
 /**
  * This class represents a MiLight WiFi box and is able to send commands to a
@@ -24,6 +39,25 @@ public class WiFiBox {
 	private int port;
 
 	/**
+	 * The set of all listeners listening for all groups of lights connected to
+	 * this WiFiBox.
+	 */
+	private Set<LightListener>[] lightListeners;
+
+	/**
+	 * The number of the currently active group
+	 */
+	private int activeGroup;
+
+	/**
+	 * An array containing references to Lights instances for all groups of
+	 * lights connected to this WiFiBox. They are not created on the fly to
+	 * avoid creating duplicate instances. Entry 0 corresponds to group 1 and so
+	 * on.
+	 */
+	private Lights[] lights;
+
+	/**
 	 * The default port for unconfigured boxes.
 	 */
 	public static final int DEFAULT_PORT = 8899;
@@ -32,7 +66,7 @@ public class WiFiBox {
 	 * The sleep time between both messages for switching lights to the white
 	 * mode.
 	 */
-	public static final int DEFAULT_SLEEP_BETWEEN_MESSAGES = 100;
+	public static final int MIN_SLEEP_BETWEEN_MESSAGES = 100;
 
 	/**
 	 * The command code for "RGBW COLOR LED ALL OFF".
@@ -43,18 +77,22 @@ public class WiFiBox {
 	 * The command code for "GROUP 1 ALL OFF".
 	 */
 	public static final int COMMAND_GROUP_1_OFF = 0x46;
+
 	/**
 	 * The command code for "GROUP 2 ALL OFF".
 	 */
 	public static final int COMMAND_GROUP_2_OFF = 0x48;
+
 	/**
 	 * The command code for "GROUP 3 ALL OFF".
 	 */
 	public static final int COMMAND_GROUP_3_OFF = 0x4A;
+
 	/**
 	 * The command code for "GROUP 4 ALL OFF".
 	 */
 	public static final int COMMAND_GROUP_4_OFF = 0x4C;
+
 	/**
 	 * The command code for "RGBW COLOR LED ALL ON".
 	 */
@@ -126,26 +164,15 @@ public class WiFiBox {
 	public static final int COMMAND_DISCO_SLOWER = 0x43;
 
 	/**
-	 * The command code for "COLOR SETTING" (part of a two-byte
-	 * command).
+	 * The command code for "COLOR SETTING" (part of a two-byte command).
 	 */
+
 	public static final int COMMAND_COLOR = 0x40;
-
-	/**
-	 * The maximum color value, starting at 0.
-	 */
-	public static final int MAX_COLOR = 0xFF;
-
 	/**
 	 * The command code for "DIRECT BRIGHTNESS SETTING" (part of a two-byte
 	 * command).
 	 */
 	public static final int COMMAND_BRIGHTNESS = 0x4E;
-
-	/**
-	 * The maximum brightness value, starting at 0.
-	 */
-	public static final int MAX_BRIGHTNESS = 0x3B;
 
 	/**
 	 * A constructor creating a new instance of the WiFi box class.
@@ -155,10 +182,26 @@ public class WiFiBox {
 	 * @param port
 	 *            is the port of the WiFi box (omit this if unsure)
 	 */
+	@SuppressWarnings("unchecked")
 	public WiFiBox(InetAddress address, int port) {
+		// super call
 		super();
+
+		// save attributes
 		this.address = address;
 		this.port = port;
+
+		// create listener sets
+		lightListeners = new HashSet[4];
+		for (int i = 0; i < 4; i++) {
+			lightListeners[i] = new HashSet<LightListener>();
+		}
+
+		// create lights
+		lights = new Lights[4];
+		for (int group = 1; group <= 4; group++) {
+			lights[group - 1] = new Lights(this, group);
+		}
 	}
 
 	/**
@@ -204,6 +247,28 @@ public class WiFiBox {
 	}
 
 	/**
+	 * Get the group of lights that is controlled by a given group number. The
+	 * Lights instance may be used to control the groups of lights individually
+	 * and mix different WiFi boxes.
+	 * 
+	 * @param group
+	 *            is the number of the group at the WiFi box (between 1 and 4)
+	 * @return the group of lights that is controled by the given group number
+	 * @throws IllegalArgumentException
+	 *             if the group number is not between 1 and 4
+	 */
+	public Lights getLights(int group) throws IllegalArgumentException {
+		// check group number
+		if (1 > group || group > 4) {
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+
+		// create new instance
+		return lights[group - 1];
+	}
+
+	/**
 	 * This function sends an array of bytes to the WiFi box. The bytes should
 	 * be a valid command, i.e. the array's length should be three.
 	 * 
@@ -215,16 +280,41 @@ public class WiFiBox {
 	 *             if the message could not be sent
 	 */
 	private void sendMessage(byte[] messages) throws IOException {
+		// check arguments
 		if (messages.length != 3) {
 			throw new IllegalArgumentException(
 					"The message to send should consist of exactly 3 bytes.");
 		}
 
+		// notify listeners
+		notifyLightListeners(messages);
+
+		// send message
 		DatagramSocket socket = new DatagramSocket();
 		DatagramPacket packet = new DatagramPacket(messages, messages.length,
 				address, port);
 		socket.send(packet);
 		socket.close();
+
+		// adjust currently active group of lights
+		switch (messages[0]) {
+		case COMMAND_GROUP_1_ON:
+		case COMMAND_GROUP_1_OFF:
+			activeGroup = 1;
+			break;
+		case COMMAND_GROUP_2_ON:
+		case COMMAND_GROUP_2_OFF:
+			activeGroup = 2;
+			break;
+		case COMMAND_GROUP_3_ON:
+		case COMMAND_GROUP_3_OFF:
+			activeGroup = 3;
+			break;
+		case COMMAND_GROUP_4_ON:
+		case COMMAND_GROUP_4_OFF:
+			activeGroup = 4;
+			break;
+		}
 	}
 
 	/**
@@ -253,6 +343,110 @@ public class WiFiBox {
 	private byte[] padMessage(int message1, int message2) {
 		byte[] paddedMessage = { (byte) message1, (byte) message2, 0x55 & 0x55 };
 		return paddedMessage;
+	}
+
+	/**
+	 * This function constructs a three-byte command to switch on a given group
+	 * of lights. This array is ready to be sent to the WiFi box.
+	 * 
+	 * @param group
+	 *            is the group of lights to switch on
+	 * @throws IllegalArgumentException
+	 *             if the group number is not between 1 and 4
+	 * @return the message array to send to the WiFi box
+	 */
+	private byte[] getSwitchOnCommand(int group)
+			throws IllegalArgumentException {
+		switch (group) {
+		case 1:
+			return padMessage(COMMAND_GROUP_1_ON);
+		case 2:
+			return padMessage(COMMAND_GROUP_2_ON);
+		case 3:
+			return padMessage(COMMAND_GROUP_3_ON);
+		case 4:
+			return padMessage(COMMAND_GROUP_4_ON);
+		default:
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+	}
+
+	/**
+	 * This function constructs a three-byte command to switch off a given group
+	 * of lights. This array is ready to be sent to the WiFi box.
+	 * 
+	 * @param group
+	 *            is the group of lights to switch off
+	 * @throws IllegalArgumentException
+	 *             if the group number is not between 1 and 4
+	 * @return the message array to send to the WiFi box
+	 */
+	private byte[] getSwitchOffCommand(int group)
+			throws IllegalArgumentException {
+		switch (group) {
+		case 1:
+			return padMessage(COMMAND_GROUP_1_OFF);
+		case 2:
+			return padMessage(COMMAND_GROUP_2_OFF);
+		case 3:
+			return padMessage(COMMAND_GROUP_3_OFF);
+		case 4:
+			return padMessage(COMMAND_GROUP_4_OFF);
+		default:
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+	}
+
+	/**
+	 * This function constructs a three-byte command to switch a given group of
+	 * lights to the white mode. This array is ready to be sent to the WiFi box.
+	 * 
+	 * @param group
+	 *            is the group of lights to switch to the white mode
+	 * @throws IllegalArgumentException
+	 *             if the group number is not between 1 and 4
+	 * @return the message array to send to the WiFi box
+	 */
+	private byte[] getWhiteModeCommand(int group)
+			throws IllegalArgumentException {
+		switch (group) {
+		case 1:
+			return padMessage(COMMAND_GROUP_1_WHITE);
+		case 2:
+			return padMessage(COMMAND_GROUP_2_WHITE);
+		case 3:
+			return padMessage(COMMAND_GROUP_3_WHITE);
+		case 4:
+			return padMessage(COMMAND_GROUP_4_WHITE);
+		default:
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+	}
+
+	/**
+	 * This function constructs a three-byte command to change the hue of a
+	 * light to a given color
+	 * 
+	 * @param value
+	 *            the color value (between MilightColor.MIN_COLOR and
+	 *            MilightColor.MAX_COLOR)
+	 * @throws IllegalArgumentException
+	 *             if the color value is not between MilightColor.MIN_COLOR and
+	 *             MilightColor.MAX_COLOR
+	 * @return the message array to send to the WiFi box
+	 */
+	private byte[] getColorCommand(int value) throws IllegalArgumentException {
+		// check argument
+		if (value < MilightColor.MIN_COLOR || value > MilightColor.MAX_COLOR) {
+			throw new IllegalArgumentException(
+					"The color value should be between MilightColor.MIN_COLOR and MilightColor.MAX_COLOR");
+		}
+
+		// send message to the WiFi box
+		return padMessage(COMMAND_COLOR, value);
 	}
 
 	/**
@@ -378,23 +572,7 @@ public class WiFiBox {
 	 *             if the group number is not between 1 and 4
 	 */
 	public void off(int group) throws IOException, IllegalArgumentException {
-		switch (group) {
-		case 1:
-			sendMessage(COMMAND_GROUP_1_OFF);
-			break;
-		case 2:
-			sendMessage(COMMAND_GROUP_2_OFF);
-			break;
-		case 3:
-			sendMessage(COMMAND_GROUP_3_OFF);
-			break;
-		case 4:
-			sendMessage(COMMAND_GROUP_4_OFF);
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"The group number must be between 1 and 4");
-		}
+		sendMessage(getSwitchOffCommand(group));
 	}
 
 	/**
@@ -418,23 +596,7 @@ public class WiFiBox {
 	 *             if the group number is not between 1 and 4
 	 */
 	public void on(int group) throws IOException, IllegalArgumentException {
-		switch (group) {
-		case 1:
-			sendMessage(COMMAND_GROUP_1_ON);
-			break;
-		case 2:
-			sendMessage(COMMAND_GROUP_2_ON);
-			break;
-		case 3:
-			sendMessage(COMMAND_GROUP_3_ON);
-			break;
-		case 4:
-			sendMessage(COMMAND_GROUP_4_ON);
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"The group number must be between 1 and 4");
-		}
+		sendMessage(getSwitchOnCommand(group));
 	}
 
 	/**
@@ -445,7 +607,7 @@ public class WiFiBox {
 	 */
 	public void white() {
 		int[] messages = { COMMAND_ALL_ON, COMMAND_ALL_WHITE };
-		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
 	}
 
 	/**
@@ -461,36 +623,21 @@ public class WiFiBox {
 	 */
 	public void white(int group) throws IllegalArgumentException {
 		// create message array
-		int[] messages = new int[2];
-		switch (group) {
-		case 1:
-			messages[0] = COMMAND_GROUP_1_ON;
-			messages[1] = COMMAND_GROUP_1_WHITE;
-			break;
-		case 2:
-			messages[0] = COMMAND_GROUP_2_ON;
-			messages[1] = COMMAND_GROUP_2_WHITE;
-			break;
-		case 3:
-			messages[0] = COMMAND_GROUP_3_ON;
-			messages[1] = COMMAND_GROUP_3_WHITE;
-			break;
-		case 4:
-			messages[0] = COMMAND_GROUP_4_ON;
-			messages[1] = COMMAND_GROUP_4_WHITE;
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"The group number must be between 1 and 4");
-		}
+		byte[][] messages = new byte[2][3];
+
+		// switch on first
+		messages[0] = getSwitchOnCommand(group);
+
+		// switch to white mode
+		messages[1] = getWhiteModeCommand(group);
 
 		// send messages
-		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
 	}
 
 	/**
 	 * Trigger the disco mode for the active group of lights (the last one that
-	 * was switched on).
+	 * was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @throws IOException
 	 *             if the message could not be sent
@@ -513,32 +660,21 @@ public class WiFiBox {
 	 */
 	public void discoMode(int group) throws IllegalArgumentException {
 		// create message array
-		int[] messages = { 0, COMMAND_DISCO };
-		switch (group) {
-		case 1:
-			messages[0] = COMMAND_GROUP_1_ON;
-			break;
-		case 2:
-			messages[0] = COMMAND_GROUP_2_ON;
-			break;
-		case 3:
-			messages[0] = COMMAND_GROUP_3_ON;
-			break;
-		case 4:
-			messages[0] = COMMAND_GROUP_4_ON;
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"The group number must be between 1 and 4");
-		}
+		byte[][] messages = new byte[2][3];
+
+		// switch on first
+		messages[0] = getSwitchOnCommand(group);
+
+		// start disco mode
+		messages[1] = padMessage(COMMAND_DISCO);
 
 		// send messages
-		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
 	}
 
 	/**
 	 * Increase the disco mode's speed for the active group of lights (the last
-	 * one that was switched on).
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @throws IOException
 	 *             if the message could not be sent
@@ -549,7 +685,7 @@ public class WiFiBox {
 
 	/**
 	 * Decrease the disco mode's speed for the active group of lights (the last
-	 * one that was switched on).
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @throws IOException
 	 *             if the message could not be sent
@@ -560,23 +696,24 @@ public class WiFiBox {
 
 	/**
 	 * Set the brightness value for the currently active group of lights (the
-	 * last one that was switched on).
+	 * last one that was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @param value
-	 *            is the brightness value to set (between 0 and
-	 *            WiFiBox.MAX_BRIGHTNESS)
+	 *            is the brightness value to set (between
+	 *            MilightColor.MIN_BRIGHTNESS and MilightColor.MAX_BRIGHTNESS)
 	 * @throws IOException
 	 *             if the message could not be sent
 	 * @throws IllegalArgumentException
-	 *             if the brightness value is not between 0 and
-	 *             WiFiBox.MAX_BRIGHTNESS
+	 *             if the brightness value is not between
+	 *             MilightColor.MIN_BRIGHTNESS and MilightColor.MAX_BRIGHTNESS
 	 */
 	public void brightness(int value) throws IOException,
 			IllegalArgumentException {
 		// check argument
-		if (value < 0 || value > MAX_BRIGHTNESS) {
+		if (value < MilightColor.MIN_BRIGHTNESS
+				|| value > MilightColor.MAX_BRIGHTNESS) {
 			throw new IllegalArgumentException(
-					"The brightness value should be between 0 and WiFiBox.MAX_BRIGHTNESS");
+					"The brightness value should be between MilightColor.MIN_BRIGHTNESS and MilightColor.MAX_BRIGHTNESS");
 		}
 
 		// send message to the WiFi box
@@ -589,74 +726,122 @@ public class WiFiBox {
 	 * @param group
 	 *            is the number of the group to set the brightness for
 	 * @param value
-	 *            is the brightness value to set (between 0 and
-	 *            WiFiBox.MAX_BRIGHTNESS)
+	 *            is the brightness value to set (between
+	 *            MilightColor.MIN_BRIGHTNESS and MilightColor.MAX_BRIGHTNESS)
 	 * @throws IOException
 	 *             if the message could not be sent
 	 * @throws IllegalArgumentException
 	 *             if group is not between 1 and 4 or the brightness value is
-	 *             not between 0 and WiFiBox.MAX_BRIGHTNESS
+	 *             not between MilightColor.MIN_BRIGHTNESS and
+	 *             MilightColor.MAX_BRIGHTNESS
 	 */
 	public void brightness(int group, int value) throws IOException,
 			IllegalArgumentException {
 		// check arguments
-		if (value < 0 || value > MAX_BRIGHTNESS) {
+		if (value < MilightColor.MIN_BRIGHTNESS
+				|| value > MilightColor.MAX_BRIGHTNESS) {
 			throw new IllegalArgumentException(
-					"The brightness value should be between 0 and WiFiBox.MAX_BRIGHTNESS");
+					"The brightness value should be between MilightColor.MIN_BRIGHTNESS and MilightColor.MAX_BRIGHTNESS");
 		}
 
 		// create message array
 		byte[][] messages = new byte[2][3];
 
 		// switch on first
-		switch (group) {
-		case 1:
-			messages[0] = padMessage(COMMAND_GROUP_1_ON);
-			break;
-		case 2:
-			messages[0] = padMessage(COMMAND_GROUP_2_ON);
-			break;
-		case 3:
-			messages[0] = padMessage(COMMAND_GROUP_3_ON);
-			break;
-		case 4:
-			messages[0] = padMessage(COMMAND_GROUP_4_ON);
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"The group number must be between 1 and 4");
-		}
+		messages[0] = getSwitchOnCommand(group);
 
 		// adjust brightness
 		messages[1] = padMessage(COMMAND_BRIGHTNESS, value);
 
 		// send messages
-		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
 	}
-	
+
 	/**
-	 * Set the color value for the currently active group of lights (the
-	 * last one that was switched on).
+	 * Set the color value for the currently active group of lights (the last
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @param value
-	 *            is the color value to set (between 0 and
-	 *            WiFiBox.MAX_COLOR)
+	 *            is the color value to set (between MilightColor.MIN_COLOR and
+	 *            MilightColor.MAX_COLOR)
 	 * @throws IOException
 	 *             if the message could not be sent
 	 * @throws IllegalArgumentException
-	 *             if the color value is not between 0 and
-	 *             WiFiBox.MAX_COLOR
+	 *             if the color value is not between MilightColor.MIN_COLOR and
+	 *             MilightColor.MAX_COLOR
 	 */
-	public void color(int value) throws IOException,
-			IllegalArgumentException {
-		// check argument
-		if (value < 0 || value > MAX_COLOR) {
-			throw new IllegalArgumentException(
-					"The color value should be between 0 and WiFiBox.MAX_COLOR");
-		}
-
+	public void color(int value) throws IOException, IllegalArgumentException {
 		// send message to the WiFi box
-		sendMessage(COMMAND_COLOR, value);
+		sendMessage(getColorCommand(value));
+	}
+
+	/**
+	 * Set the color value for the currently active group of lights (the last
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}).
+	 * 
+	 * @param color
+	 *            is the color to set
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	public void color(MilightColor color, boolean forceColoredMode)
+			throws IOException {
+		if (color.isColoredMode() || forceColoredMode) {
+			// colored mode
+			color(color.getMilightHue());
+		} else {
+			// white mode
+			white();
+		}
+	}
+
+	/**
+	 * Set the color value for the currently active group of lights (the last
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}). Colors
+	 * with low saturation will be displayed in white mode for a better result.
+	 * 
+	 * @param color
+	 *            is the color to set
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	public void color(MilightColor color) throws IOException {
+		color(color, false);
+	}
+
+	/**
+	 * Set the color value for the currently active group of lights (the last
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}).
+	 * 
+	 * @param color
+	 *            is the color to set
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	public void color(Color color, boolean forceColoredMode) throws IOException {
+		color(new MilightColor(color), forceColoredMode);
+	}
+
+	/**
+	 * Set the color value for the currently active group of lights (the last
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}). Colors
+	 * with low saturation will be displayed in white mode for a better result.
+	 * 
+	 * @param color
+	 *            is the color to set
+	 * @throws IOException
+	 *             if the message could not be sent
+	 */
+	public void color(Color color) throws IOException {
+		color(new MilightColor(color));
 	}
 
 	/**
@@ -665,48 +850,430 @@ public class WiFiBox {
 	 * @param group
 	 *            is the number of the group to set the color for
 	 * @param value
-	 *            is the color value to set (between 0 and
-	 *            WiFiBox.MAX_COLOR)
+	 *            is the color value to set (between MilightColor.MIN_COLOR and
+	 *            MilightColor.MAX_COLOR)
 	 * @throws IOException
 	 *             if the message could not be sent
 	 * @throws IllegalArgumentException
-	 *             if group is not between 1 and 4 or the color value is
-	 *             not between 0 and WiFiBox.MAX_COLOR
+	 *             if group is not between 1 and 4 or the color value is not
+	 *             between MilightColor.MIN_COLOR and MilightColor.MAX_COLOR
 	 */
 	public void color(int group, int value) throws IOException,
 			IllegalArgumentException {
-		// check arguments
-		if (value < 0 || value > MAX_COLOR) {
-			throw new IllegalArgumentException(
-					"The color value should be between 0 and WiFiBox.MAX_COLOR");
-		}
-
 		// create message array
 		byte[][] messages = new byte[2][3];
 
 		// switch on first
-		switch (group) {
-		case 1:
-			messages[0] = padMessage(COMMAND_GROUP_1_ON);
-			break;
-		case 2:
-			messages[0] = padMessage(COMMAND_GROUP_2_ON);
-			break;
-		case 3:
-			messages[0] = padMessage(COMMAND_GROUP_3_ON);
-			break;
-		case 4:
-			messages[0] = padMessage(COMMAND_GROUP_4_ON);
-			break;
-		default:
+		messages[0] = getSwitchOnCommand(group);
+
+		// adjust color
+		messages[1] = getColorCommand(value);
+
+		// send messages
+		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
+	}
+
+	/**
+	 * Set the color value for a given group of lights.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to set
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
+	 * @throws IOException
+	 *             if the message could not be sent
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void color(int group, MilightColor color, boolean forceColoredMode)
+			throws IOException, IllegalArgumentException {
+		if (color.isColoredMode() || forceColoredMode) {
+			// colored mode
+			color(group, color.getMilightHue());
+		} else {
+			// white mode
+			white(group);
+		}
+	}
+
+	/**
+	 * Set the color value for a given group of lights. Colors with low
+	 * saturation will be displayed in white mode for a better result.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to set
+	 * @throws IOException
+	 *             if the message could not be sent
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void color(int group, MilightColor color) throws IOException,
+			IllegalArgumentException {
+		color(group, color, false);
+	}
+
+	/**
+	 * Set the color value for a given group of lights.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to set
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
+	 * @throws IOException
+	 *             if the message could not be sent
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void color(int group, Color color, boolean forceColoredMode)
+			throws IOException, IllegalArgumentException {
+		color(group, new MilightColor(color), forceColoredMode);
+	}
+
+	/**
+	 * Set the color value for a given group of lights. Colors with low
+	 * saturation will be displayed in white mode for a better result.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to set
+	 * @throws IOException
+	 *             if the message could not be sent
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void color(int group, Color color) throws IOException,
+			IllegalArgumentException {
+		color(group, new MilightColor(color));
+	}
+
+	/**
+	 * Set the color and brightness values for the currently active group of
+	 * lights (the last one that was switched on, see
+	 * {@link WiFiBox#getActiveGroup()}). Both values are extracted from the
+	 * color given to the function by transforming it to an HSB color.
+	 * 
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 */
+	public void colorAndBrightness(MilightColor color) {
+		// create message array
+		byte[][] messages = new byte[2][3];
+
+		// adjust color
+		messages[0] = getColorCommand(color.getMilightHue());
+
+		// adjust brightness
+		messages[1] = padMessage(COMMAND_BRIGHTNESS,
+				color.getMilightBrightness());
+
+		// send messages
+		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
+	}
+
+	/**
+	 * Set the color and brightness values for the currently active group of
+	 * lights (the last one that was switched on, see
+	 * {@link WiFiBox#getActiveGroup()}). Both values are extracted from the
+	 * color given to the function by transforming it to an HSB color.
+	 * 
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 */
+	public void colorAndBrightness(Color color) {
+		colorAndBrightness(new MilightColor(color));
+	}
+
+	/**
+	 * Set the color and brightness values for a given group of lights. Both
+	 * values are extracted from the color given to the function by transforming
+	 * it to an HSB color.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void colorAndBrightness(int group, MilightColor color,
+			boolean forceColoredMode) {
+		// create message array
+		byte[][] messages = new byte[3][3];
+
+		// switch on first
+		messages[0] = getSwitchOnCommand(group);
+
+		// adjust color
+		if (color.isColoredMode() || forceColoredMode) {
+			// colored mode
+			messages[1] = getColorCommand(color.getMilightHue());
+		} else {
+			// white mode
+			messages[1] = getWhiteModeCommand(group);
+		}
+
+		// adjust brightness
+		messages[2] = padMessage(COMMAND_BRIGHTNESS,
+				color.getMilightBrightness());
+
+		// send messages
+		sendMultipleMessages(messages, MIN_SLEEP_BETWEEN_MESSAGES);
+	}
+
+	/**
+	 * Set the color and brightness values for a given group of lights. Both
+	 * values are extracted from the color given to the function by transforming
+	 * it to an HSB color. Colors with low saturation will be displayed in white
+	 * mode for a better result.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void colorAndBrightness(int group, MilightColor color) {
+		colorAndBrightness(group, color, false);
+	}
+
+	/**
+	 * Set the color and brightness values for a given group of lights. Both
+	 * values are extracted from the color given to the function by transforming
+	 * it to an HSB color.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 * @param forceColoredMode
+	 *            true if all colors should be displayed in colored mode, false
+	 *            to use white mode for colors with low saturation and else
+	 *            colored mode
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void colorAndBrightness(int group, Color color,
+			boolean forceColoredMode) {
+		colorAndBrightness(group, new MilightColor(color), forceColoredMode);
+	}
+
+	/**
+	 * Set the color and brightness values for a given group of lights. Both
+	 * values are extracted from the color given to the function by transforming
+	 * it to an HSB color. Colors with low saturation will be displayed in white
+	 * mode for a better result.
+	 * 
+	 * @param group
+	 *            is the number of the group to set the color for
+	 * @param color
+	 *            is the color to extract hue and brightness from
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void colorAndBrightness(int group, Color color) {
+		colorAndBrightness(group, new MilightColor(color));
+	}
+
+	/**
+	 * Use this function to add a new listener one group of lights connected to
+	 * the WiFiBox. Listeners will be notified when the group of lights is
+	 * switched on or off, color or brightness change, white or disco mode is
+	 * activated or disco mode is set faster or slower.
+	 * 
+	 * @param group
+	 *            is the number of the group to add the listener to
+	 * @param listener
+	 *            is the listener to add
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void addLightListener(int group, LightListener listener) {
+		// check group number
+		if (1 > group || group > 4) {
 			throw new IllegalArgumentException(
 					"The group number must be between 1 and 4");
 		}
 
-		// adjust color
-		messages[1] = padMessage(COMMAND_COLOR, value);
+		// add listener
+		lightListeners[group - 1].add(listener);
+	}
 
-		// send messages
-		sendMultipleMessages(messages, DEFAULT_SLEEP_BETWEEN_MESSAGES);
+	/**
+	 * This function removes a listener from this WiFiBox which was added before
+	 * by {@link WiFiBox#addLightListener(int, LightListener)}.
+	 * 
+	 * @param group
+	 *            is the number of the group to remove the listener from
+	 * @param listener
+	 *            is the listener to remove
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void removeLightListener(int group, LightListener listener) {
+		// check group number
+		if (1 > group || group > 4) {
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+
+		// remove listener
+		lightListeners[group - 1].remove(listener);
+	}
+
+	/**
+	 * This function sends a LightEvent to all listeners listening on a certain
+	 * group of lights.
+	 * 
+	 * @param group
+	 *            is the number of the group to notify
+	 * @param event
+	 *            is the LightEvent to send to all listeners
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	private void notifyLightListeners(int group, LightEvent event) {
+		// check group number
+		if (1 > group || group > 4) {
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+
+		// notify listeners
+		for (LightListener listener : lightListeners[group - 1]) {
+			listener.lightsChanged(event);
+		}
+	}
+
+	/**
+	 * This function sends a LightEvent to all listeners listening on a certain
+	 * group of lights. The event's type and the group of lights receiving the
+	 * message is obtained from the raw message sent to the WiFiBox.
+	 * 
+	 * @param message
+	 *            is the raw message sent to the WiFiBox
+	 */
+	private void notifyLightListeners(byte[] message) {
+		switch ((int) message[0]) {
+		// switch off commands
+		case COMMAND_ALL_OFF:
+			for (int group = 1; group <= 4; group++) {
+				notifyLightListeners(group,
+						new SwitchOffEvent(getLights(group)));
+			}
+			break;
+		case COMMAND_GROUP_1_OFF:
+			notifyLightListeners(1, new SwitchOffEvent(getLights(1)));
+			break;
+		case COMMAND_GROUP_2_OFF:
+			notifyLightListeners(2, new SwitchOffEvent(getLights(2)));
+			break;
+		case COMMAND_GROUP_3_OFF:
+			notifyLightListeners(3, new SwitchOffEvent(getLights(3)));
+			break;
+		case COMMAND_GROUP_4_OFF:
+			notifyLightListeners(4, new SwitchOffEvent(getLights(4)));
+			break;
+		// switch on commands
+		case COMMAND_ALL_ON:
+			for (int group = 1; group <= 4; group++) {
+				notifyLightListeners(group, new SwitchOnEvent(getLights(group)));
+			}
+			break;
+		case COMMAND_GROUP_1_ON:
+			notifyLightListeners(1, new SwitchOnEvent(getLights(1)));
+			break;
+		case COMMAND_GROUP_2_ON:
+			notifyLightListeners(2, new SwitchOnEvent(getLights(2)));
+			break;
+		case COMMAND_GROUP_3_ON:
+			notifyLightListeners(3, new SwitchOnEvent(getLights(3)));
+			break;
+		case COMMAND_GROUP_4_ON:
+			notifyLightListeners(4, new SwitchOnEvent(getLights(4)));
+			break;
+		// white mode commands
+		case COMMAND_ALL_WHITE:
+			for (int group = 1; group <= 4; group++) {
+				notifyLightListeners(group,
+						new WhiteModeEvent(getLights(group)));
+			}
+			break;
+		case COMMAND_GROUP_1_WHITE:
+			notifyLightListeners(1, new WhiteModeEvent(getLights(1)));
+			break;
+		case COMMAND_GROUP_2_WHITE:
+			notifyLightListeners(2, new WhiteModeEvent(getLights(2)));
+			break;
+		case COMMAND_GROUP_3_WHITE:
+			notifyLightListeners(3, new WhiteModeEvent(getLights(3)));
+			break;
+		case COMMAND_GROUP_4_WHITE:
+			notifyLightListeners(4, new WhiteModeEvent(getLights(4)));
+			break;
+		// disco mode commands
+		case COMMAND_DISCO:
+			notifyLightListeners(getActiveGroup(), new DiscoModeEvent(
+					getLights(getActiveGroup())));
+			break;
+		case COMMAND_DISCO_FASTER:
+			notifyLightListeners(getActiveGroup(), new DiscoModeFasterEvent(
+					getLights(getActiveGroup())));
+			break;
+		case COMMAND_DISCO_SLOWER:
+			notifyLightListeners(getActiveGroup(), new DiscoModeSlowerEvent(
+					getLights(getActiveGroup())));
+			break;
+		// change color commands
+		case COMMAND_COLOR:
+			MilightColor color = new MilightColor(Color.WHITE);
+			color.setMilightHue(message[1]);
+			notifyLightListeners(getActiveGroup(), new ColoredModeEvent(
+					getLights(getActiveGroup())));
+			notifyLightListeners(getActiveGroup(), new ChangeColorEvent(
+					getLights(getActiveGroup()), color));
+			break;
+		// change brightness commands
+		case COMMAND_BRIGHTNESS:
+			MilightColor color2 = new MilightColor(Color.WHITE);
+			color2.setMilightBrightness(message[1]);
+			notifyLightListeners(getActiveGroup(), new ChangeBrightnessEvent(
+					getLights(getActiveGroup()), color2.getBrightness()));
+			break;
+		}
+	}
+
+	/**
+	 * This function returns the number of the currently active group of lights.
+	 * 
+	 * @return the number of the currently active group of lights
+	 */
+	public int getActiveGroup() {
+		return activeGroup;
+	}
+
+	/**
+	 * This function describes the objet as a string. Use this for debugging.
+	 * 
+	 * @returns a string description of the instance
+	 */
+	public String toString() {
+		return String.format("[WiFiBox, address: %s, port: %d, activeGroup: %d]",
+				address.toString(), port, activeGroup);
 	}
 }
