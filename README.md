@@ -22,7 +22,7 @@ To connect to your WiFi box create a
 [`WiFiBox`](https://stoman.github.io/MilightAPI/de/toman/milight/WiFiBox.html)
 object in your Java application:
 
-```
+```java
 String ip = "192.168.1.42"; //add your custom IP here
 WiFiBox box = new WiFiBox(ip);
 ```
@@ -31,7 +31,7 @@ WiFiBox box = new WiFiBox(ip);
 addresses](https://stoman.github.io/MilightAPI/de/toman/milight/WiFiBox.html#constructor.summary)
 are also available. Individual groups of lights can be created like this:
 
-```
+```java
 Lights groupA = box.getLights(1);
 Lights groupB = new Lights(ip, 2);
 ```
@@ -39,7 +39,7 @@ Lights groupB = new Lights(ip, 2);
 All commands available on a remote control or an app connected to this box
 are now available, for example:
 
-```
+```java
 //switch all lights on
 box.on();
 //switch group 4 of
@@ -68,14 +68,14 @@ room fitting to a movie you are watching or similar.
 [`AmbientLight`](https://stoman.github.io/MilightAPI/de/toman/milight/AmbientLight.html)
 can be used like this:
 
-```
+```java
 AmbientLight ambient = new AmbientLight(groupA);//or some other Lights object
 ambient.start();
 ```
 
 The effect can be stopped with
 
-```
+```java
 ambient.stop();
 ```
 
@@ -89,14 +89,14 @@ The function
 is available to find the most common data lines. The visualizer can be
 started like this using the default line:
 
-```
+```java
 MusicVisualizer vis = new MusicVisualizer(groupB);
 vis.start();
 ```
 
 The effect can be stopped with
 
-```
+```java
 vis.stop();
 ```
 
@@ -107,7 +107,7 @@ There is a
 available to fade from one color or brightness to another or switch the
 lights off after a certain amount of time. Timers can be used like this:
 
-```
+```java
 Timer timer = new Timer(
 	groupA, //the lights to control,
 	10000, //animation time in milliseconds
@@ -125,7 +125,7 @@ to react to commands sent out. Add a
 [`LightListener`](https://stoman.github.io/MilightAPI/de/toman/milight/events/LightListener.html)
 like this:
 
-```
+```java
 groupA.addLightListener(new LightListener() {
 	public void lightsChanged(LightEvent e) {
 		//work with the event
