@@ -8,7 +8,8 @@ like an ambient light effect, fading animations and music visualizations are
 included. Only a WiFi box and some light bulbs are needed to run this API.
 
 Pull requests as well as notifications about usages of this API are always
-appreciated.
+appreciated. Documentation of all classes is available at [GitHub
+Pages](https://stoman.github.io/MilightAPI/de/toman/milight/package-summary.html).
 
 ## Basic Usage
 
@@ -17,16 +18,18 @@ local IP address of your box in the local network. This information can be
 found at the interface of your router, for instance. Now you can run the
 API on a machine connected to the same network.
 
-To connect to your WiFi box create a `WiFiBox` object in your Java
-application:
+To connect to your WiFi box create a
+[`WiFiBox`](https://stoman.github.io/MilightAPI/de/toman/milight/WiFiBox.html)
+object in your Java application:
 
 ```
 String ip = "192.168.1.42"; //add your custom IP here
 WiFiBox box = new WiFiBox(ip);
 ```
 
-Additional constructors with custom ports or other types of addresses are
-also available. Individual groups of lights can be created like this:
+[Additional constructors with custom ports or other types of
+addresses](https://stoman.github.io/MilightAPI/de/toman/milight/WiFiBox.html#constructor.summary)
+are also available. Individual groups of lights can be created like this:
 
 ```
 Lights groupA = box.getLights(1);
@@ -51,16 +54,19 @@ box.color(3, new MilightColor(Color.BLUE));
 box.brightness(1, MilightColor.MIN_BRIGHTNESS);
 ```
 
-Many more commands are available, check the docs to read more. To display
-colors the lights change their brightness and hue as well switch between
-white and color mode to resemble the chosen color as close as possible.
+Many more commands are available, check the
+[docs](https://stoman.github.io/MilightAPI/de/toman/milight/WiFiBox.html) to
+read more. To display colors the lights change their brightness and hue as
+well switch between white and color mode to resemble the chosen color as
+close as possible.
 
 ## Ambient Light and Music Visualizer
 
 Lights can be used to create an ambient light effect. This means the lights
 will resemble the colors of the screen of your PC. Use this to lighten your
-room fitting to a movie you are watching or similar. `AmbientLight` can be
-used like this:
+room fitting to a movie you are watching or similar.
+[`AmbientLight`](https://stoman.github.io/MilightAPI/de/toman/milight/AmbientLight.html)
+can be used like this:
 
 ```
 AmbientLight ambient = new AmbientLight(groupA);//or some other Lights object
@@ -78,8 +84,10 @@ More configuration is available and described in the documentation.
 Similarly, a visualization of the music played on your machine can be
 created. The source to read the music from needs to be available as a
 [`TargetDataLine`](https://docs.oracle.com/javase/8/docs/api/javax/sound/sampled/TargetDataLine.html).
-The function `MusicVisualizer.getDefaultLine()` is available to find the
-most common data lines. The visualizer can be started like this:
+The function
+[`MusicVisualizer.getDefaultLine()`](https://stoman.github.io/MilightAPI/de/toman/milight/MusicVisualizer.html#getDefaultLine--)
+is available to find the most common data lines. The visualizer can be
+started like this:
 
 ```
 MusicVisualizer vis = new MusicVisualizer(groupB, MusicVisualizer.getDefaultLine());
@@ -94,9 +102,10 @@ vis.stop();
 
 ## Timer
 
-There is a timer available to fade from one color or brightness to another
-or switch the lights off after a certain amount of time. Timers can be used
-like this:
+There is a
+[timer](https://stoman.github.io/MilightAPI/de/toman/milight/Timer.html)
+available to fade from one color or brightness to another or switch the
+lights off after a certain amount of time. Timers can be used like this:
 
 ```
 Timer timer = new Timer(
@@ -112,7 +121,9 @@ timer.start();
 ## Watching Events
 
 All commands sent out by the API are available as events to make it possible
-to react to commands sent out. Add a `LightListener` like this:
+to react to commands sent out. Add a
+[`LightListener`](https://stoman.github.io/MilightAPI/de/toman/milight/events/LightListener.html)
+like this:
 
 ```
 groupA.addLightListener(new LightListener() {
@@ -124,18 +135,26 @@ groupA.addLightListener(new LightListener() {
 
 The following events are available:
 
-* ChangeBrightnessEvent
-* ChangeColorEvent
-* ColoredModeEvent
-* DiscoModeEvent
-* DiscoModeFasterEvent
-* DiscoModeSlowerEvent
-* SwitchOFfEvent
-* SwitchOnEvent
-* WhiteModeEvent
+* [ChangeBrightnessEvent](https://stoman.github.io/MilightAPI/de/toman/milight/events/ChangeBrightnessEvent.html)
+* [ChangeColorEvent](https://stoman.github.io/MilightAPI/de/toman/milight/events/ChangeColorEvent.html)
+* [ColoredModeEvent](https://stoman.github.io/MilightAPI/de/toman/milight/events/ColoredModeEvent.html)
+* [DiscoModeEvent](https://stoman.github.io/MilightAPI/de/toman/milight/events/DiscoModeEvent.html)
+* [DiscoModeFasterEvent](https://stoman.github.io/MilightAPI/de/toman/milight/events/DiscoModeFasterEvent.html)
+* [DiscoModeSlowerEvent](https://stoman.github.io/MilightAPI/de/toman/milight/events/DiscoModeSlowerEvent.html)
+* [SwitchOffEvent](https://stoman.github.io/MilightAPI/de/toman/milight/events/SwitchOffEvent.html)
+* [SwitchOnEvent](https://stoman.github.io/MilightAPI/de/toman/milight/events/SwitchOnEvent.html)
+* [WhiteModeEvent](https://stoman.github.io/MilightAPI/de/toman/milight/events/WhiteModeEvent.html)
 
-Similarly, there is a `TimerListener` available to catch the event that the
-timer has finished its animation.
+Similarly, there is a
+[`TimerListener`](https://stoman.github.io/MilightAPI/de/toman/milight/events/TimerListener.html)
+available to catch the event that the timer has finished its animation.
+
+There is no way to read the current state of a light from the WiFi box.
+However, we can track all commands sent by the API to compute the current
+state. To automatically track the state of a light use the
+[`LightState`](https://stoman.github.io/MilightAPI/de/toman/milight/LightState.html)
+class. Note, that changes made by another remote control or app are not
+noticed by this class.
 
 ## Author
 
