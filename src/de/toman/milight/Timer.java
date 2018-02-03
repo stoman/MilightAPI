@@ -1,6 +1,11 @@
 package de.toman.milight;
 
+import java.awt.Color;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+
+import de.toman.milight.events.TimerListener;
 
 /**
  * This class dims a group of lights over time from one brightness level to
@@ -24,15 +29,15 @@ public class Timer implements Runnable {
 	private long timeRemaining;
 
 	/**
-	 * The current brightness level of the light (the last one that was send, it
-	 * may be changed by another controller without getting notice).
+	 * The current color of the light (the last one that was send, it may be
+	 * changed by another controller without getting notice).
 	 */
-	private int brightnessLevelCurrent;
+	private MilightColor colorCurrent;
 
 	/**
-	 * The brightness level the lights should have in the end.
+	 * The color the lights should have in the end.
 	 */
-	private int brightnessLevelGoal;
+	private MilightColor colorGoal;
 
 	/**
 	 * True if the lights should be switched off when the countdown has
@@ -46,9 +51,69 @@ public class Timer implements Runnable {
 	private boolean stopped;
 
 	/**
+	 * The set of all TimerListeners observing this instance.
+	 */
+	private Set<TimerListener> timerListeners;
+
+	/**
+	 * The amount of time to sleep between two adjustments in milliseconds.
+	 */
+	private int sleepPerCycle;
+
+	/**
+	 * The default amount of time to sleep between two adjustments in
+	 * milliseconds.
+	 */
+	public static final int SLEEP_PER_CYCLE_DEFAULT = 2000;
+
+	/**
+	 * This constructor creates a new timer that changes the color and
+	 * brightness of a group of lights during a longer time. The timer will not
+	 * be started immediately, you need to call the function
+	 * {@link Timer#start()} to run the timer. The amount of time to sleep
+	 * between two adjustments is set to {@link Timer#SLEEP_PER_CYCLE_DEFAULT}.
+	 * You can change it with {@link Timer#setSleepPerCycle(int)}.
+	 * 
+	 * @param lights
+	 *            is the group of lights to dim
+	 * @param time
+	 *            is the overall time until the timer should finish in
+	 *            milliseconds
+	 * @param colorStart
+	 *            is color to start with
+	 * @param colorGoal
+	 *            is color the group of lights should have in the end
+	 * @param switchOff
+	 *            is true if the lights should be switched off after the
+	 *            animation ends
+	 * @throws IOException
+	 *             if the message to the WiFi box could not be sent
+	 */
+	public Timer(Lights lights, long time, MilightColor colorStart,
+			MilightColor colorGoal, boolean switchOff) throws IOException {
+		super();
+
+		// set attributes
+		this.lights = lights;
+		this.timeRemaining = time;
+		this.colorCurrent = colorStart;
+		this.colorGoal = colorGoal;
+		this.switchOff = switchOff;
+		this.timerListeners = new HashSet<TimerListener>();
+		this.sleepPerCycle = SLEEP_PER_CYCLE_DEFAULT;
+
+		// initialize lights
+		lights.on();
+		lights.colorAndBrightness(colorStart);
+	}
+
+	/**
 	 * This constructor creates a new timer that dims a group of lights during a
 	 * longer time. The timer will not be started immediately, you need to call
-	 * the function {@link Timer#start()} to run the timer.
+	 * the function {@link Timer#start()} to run the timer. The amount of time
+	 * to sleep between two adjustments is set to
+	 * {@link Timer#SLEEP_PER_CYCLE_DEFAULT}. You can change it with
+	 * {@link Timer#setSleepPerCycle(int)}.
 	 * 
 	 * @param lights
 	 *            is the group of lights to dim
@@ -92,9 +157,13 @@ public class Timer implements Runnable {
 		// set attributes
 		this.lights = lights;
 		this.timeRemaining = time;
-		this.brightnessLevelCurrent = brightnessLevelStart;
-		this.brightnessLevelGoal = brightnessLevelGoal;
+		this.colorCurrent = new MilightColor(Color.WHITE);
+		this.colorCurrent.setMilightBrightness(brightnessLevelStart);
+		this.colorGoal = new MilightColor(Color.WHITE);
+		this.colorGoal.setMilightBrightness(brightnessLevelGoal);
 		this.switchOff = switchOff;
+		this.timerListeners = new HashSet<TimerListener>();
+		this.sleepPerCycle = SLEEP_PER_CYCLE_DEFAULT;
 
 		// initialize lights
 		lights.on();
@@ -105,7 +174,9 @@ public class Timer implements Runnable {
 	 * This constructor creates a new timer that dims a group of lights during a
 	 * longer time and switches the group of lights off in the end. The timer
 	 * will not be started immediately, you need to call the function
-	 * {@link Timer#start()} to run the timer.
+	 * {@link Timer#start()} to run the timer. The amount of time to sleep
+	 * between two adjustments is set to {@link Timer#SLEEP_PER_CYCLE_DEFAULT}.
+	 * You can change it with {@link Timer#setSleepPerCycle(int)}.
 	 * 
 	 * @param lights
 	 *            is the group of lights to dim
@@ -136,7 +207,9 @@ public class Timer implements Runnable {
 	 * This constructor creates a new timer that dims a group of lights from
 	 * full brightness until switched off in the end. The timer will not be
 	 * started immediately, you need to call the function {@link Timer#start()}
-	 * to run the timer.
+	 * to run the timer. The amount of time to sleep between two adjustments is
+	 * set to {@link Timer#SLEEP_PER_CYCLE_DEFAULT}. You can change it with
+	 * {@link Timer#setSleepPerCycle(int)}.
 	 * 
 	 * @param lights
 	 *            is the group of lights to dim
@@ -161,22 +234,20 @@ public class Timer implements Runnable {
 	@Override
 	public void run() {
 		try {
-			while (brightnessLevelCurrent != brightnessLevelGoal
-					&& timeRemaining > 0 && stopped == false) {
+			while (colorCurrent != colorGoal && timeRemaining > 0
+					&& stopped == false) {
 				// compute next values
-				int brightnessLevelNext = brightnessLevelCurrent
-						+ (int) Math.signum(brightnessLevelGoal
-								- brightnessLevelCurrent);
-				long timeToSleep = timeRemaining
-						/ (Math.abs(brightnessLevelGoal
-								- brightnessLevelCurrent) + 1);
+				long timeToSleep = Math.min(sleepPerCycle, timeRemaining);
+				MilightColor color = colorCurrent.getTransition(colorGoal,
+						(float) timeToSleep / timeRemaining);
+				System.out.println(color);
 
 				// adjust attributes
-				brightnessLevelCurrent = brightnessLevelNext;
+				colorCurrent = color;
 				timeRemaining -= timeToSleep;
 
 				// send commands
-				lights.brightness(brightnessLevelCurrent);
+				lights.colorAndBrightness(color);
 
 				// sleep
 				Thread.sleep(timeToSleep);
@@ -191,6 +262,8 @@ public class Timer implements Runnable {
 		} catch (InterruptedException e) {
 			// exception while sleeping
 			stop();
+		} finally {
+			notifyTimerListeners();
 		}
 
 	}
@@ -212,4 +285,60 @@ public class Timer implements Runnable {
 		stopped = false;
 		new Thread(this).start();
 	}
+
+	/**
+	 * Set the amount of time to sleep between two cycles.
+	 * 
+	 * @param sleepPerCycle
+	 *            is the amount of time to sleep between two cycles in
+	 *            milliseconds.
+	 */
+	public void setSleepPerCycle(int sleepPerCycle) {
+		this.sleepPerCycle = sleepPerCycle;
+	}
+
+	/**
+	 * Use this function to add a new listener to the timer. Listeners will be
+	 * notified when the timer has finished its animation.
+	 * 
+	 * @param listener
+	 *            is the listener to add
+	 */
+	public void addTimerListener(TimerListener listener) {
+		timerListeners.add(listener);
+	}
+
+	/**
+	 * This function removes a listener from this timer which was added before
+	 * by {@link Timer#addTimerListener(TimerListener)}.
+	 * 
+	 * @param listener
+	 *            is the listener to remove
+	 */
+	public void removeTimerListener(TimerListener listener) {
+		timerListeners.remove(listener);
+	}
+
+	/**
+	 * This function notifies all TimerListeners listening on this group of
+	 * lights.
+	 */
+	private void notifyTimerListeners() {
+		for (TimerListener listener : timerListeners) {
+			listener.timerReady();
+		}
+	}
+
+	/**
+	 * This function describes the objet as a string. Use this for debugging.
+	 * 
+	 * @returns a string description of the instance
+	 */
+	public String toString() {
+		return String
+				.format("[Timer, lights: %s, colorCurrent: %s, colorGoal: %s, timeRemaining: %d, switchOff: %b]",
+						lights.toString(), colorCurrent.toString(),
+						colorGoal.toString(), timeRemaining, switchOff);
+	}
+
 }

@@ -4,11 +4,18 @@ import java.awt.Color;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashSet;
+import java.util.Set;
+
+import de.toman.milight.events.LightEvent;
+import de.toman.milight.events.LightListener;
 
 /**
  * This class represents a group of LED light bulbs that are connected to a WiFi
  * box using the same group. These groups can be controlled individually, it is
- * also possible to mix groups belonging to different WiFi boxes.
+ * also possible to mix groups belonging to different WiFi boxes. To create a
+ * new Lights instance create a {@link WiFiBox} instance and call
+ * {@link WiFiBox#getLights(int)}.
  * 
  * @author Stefan Toman (toman@tum.de)
  */
@@ -24,6 +31,16 @@ public class Lights {
 	private int group;
 
 	/**
+	 * The set of all listeners listening for this group of lights.
+	 */
+	private Set<LightListener> lightListeners;
+
+	/**
+	 * A LightObserver instance storing all states of the group of lights.
+	 */
+	private LightObserver observer;
+
+	/**
 	 * This constructor creates a new group of lights for a given WiFi box.
 	 * 
 	 * @param wifiBox
@@ -33,10 +50,11 @@ public class Lights {
 	 * @throws IllegalArgumentException
 	 *             if the group number is not between 1 and 4
 	 */
-	public Lights(WiFiBox wifiBox, int group) throws IllegalArgumentException {
+	protected Lights(WiFiBox wifiBox, int group)
+			throws IllegalArgumentException {
 		super();
 		this.wifiBox = wifiBox;
-		setGroup(group);
+		initialize(group);
 	}
 
 	/**
@@ -57,10 +75,10 @@ public class Lights {
 	 * @see WiFiBox#getLights(int) to get another group of lights for the same
 	 *      WiFi box
 	 */
-	public Lights(InetAddress address, int port, int group) {
+	protected Lights(InetAddress address, int port, int group) {
 		super();
 		wifiBox = new WiFiBox(address, port);
-		setGroup(group);
+		initialize(group);
 	}
 
 	/**
@@ -79,10 +97,10 @@ public class Lights {
 	 * @see WiFiBox#getLights(int) to get another group of lights for the same
 	 *      WiFi box
 	 */
-	public Lights(InetAddress address, int group) {
+	protected Lights(InetAddress address, int group) {
 		super();
 		wifiBox = new WiFiBox(address);
-		setGroup(group);
+		initialize(group);
 	}
 
 	/**
@@ -106,10 +124,11 @@ public class Lights {
 	 * @see WiFiBox#getLights(int) to get another group of lights for the same
 	 *      WiFi box
 	 */
-	public Lights(String host, int port, int group) throws UnknownHostException {
+	protected Lights(String host, int port, int group)
+			throws UnknownHostException {
 		super();
 		wifiBox = new WiFiBox(host, port);
-		setGroup(group);
+		initialize(group);
 	}
 
 	/**
@@ -131,10 +150,42 @@ public class Lights {
 	 * @see WiFiBox#getLights(int) to get another group of lights for the same
 	 *      WiFi box
 	 */
-	public Lights(String host, int group) throws UnknownHostException {
+	protected Lights(String host, int group) throws UnknownHostException {
 		super();
 		wifiBox = new WiFiBox(host);
+		initialize(group);
+	}
+
+	/**
+	 * This private function initializes a new Lights instance. This should be
+	 * called by the constructor, but just once. It sets up the group attribute,
+	 * creates a new Set instance for the LightListeners and adds a listener to
+	 * the WiFiBox which redirects all events belonging to this group from
+	 * there. Call this only when the {@link Lights#wifiBox} attribute is set.
+	 * 
+	 * @param group
+	 *            is the number of the group at the WiFi box (between 1 and 4)
+	 * @throws IllegalArgumentException
+	 *             if the group number is not between 1 and 4
+	 */
+	private void initialize(int group) {
+		// set group number
 		setGroup(group);
+
+		// create list of listeners
+		lightListeners = new HashSet<LightListener>();
+
+		// listen to WiFiBox and redirect events
+		wifiBox.addLightListener(group, new LightListener() {
+			@Override
+			public void lightsChanged(LightEvent event) {
+				// an event is triggered, redirect it
+				notifyLightListeners(event);
+			}
+		});
+
+		// add observer
+		observer = new LightObserver(this);
 	}
 
 	/**
@@ -430,8 +481,8 @@ public class Lights {
 						color(color, true);
 						Thread.sleep(colorTime);
 
-						// white mode
-						white();
+						// switch back
+						observer.restore();
 						Thread.sleep(whiteTime);
 					}
 				} catch (IOException e) {
@@ -472,5 +523,62 @@ public class Lights {
 	 */
 	public void blink(final Color color) throws IllegalArgumentException {
 		blink(color, 3);
+	}
+
+	/**
+	 * Use this function to add a new listener to the group of lights. Listeners
+	 * will be notified when the group of lights is switched on or off, color or
+	 * brightness change, white or disco mode is activated or disco mode is set
+	 * faster or slower.
+	 * 
+	 * @param listener
+	 *            is the listener to add
+	 */
+	public void addLightListener(LightListener listener) {
+		lightListeners.add(listener);
+	}
+
+	/**
+	 * This function removes a listener from this group of lights which was
+	 * added before by {@link Lights#addLightListener(LightListener)}.
+	 * 
+	 * @param listener
+	 *            is the listener to remove
+	 */
+	public void removeLightListener(LightListener listener) {
+		lightListeners.remove(listener);
+	}
+
+	/**
+	 * This function sends a LightEvent to all listeners listening on this group
+	 * of lights.
+	 * 
+	 * @param event
+	 *            is the LightEvent to send to all listeners
+	 */
+	private void notifyLightListeners(LightEvent event) {
+		for (LightListener listener : lightListeners) {
+			listener.lightsChanged(event);
+		}
+	}
+
+	/**
+	 * This function returns the LightObserver storing all the states of the
+	 * group of lights.
+	 * 
+	 * @return the LightObserver storing all the states of the group of lights
+	 */
+	public LightObserver getObserver() {
+		return observer;
+	}
+	
+	/**
+	 * This function describes the objet as a string. Use this for debugging.
+	 * 
+	 * @returns a string description of the instance
+	 */
+	public String toString() {
+		return String.format("[Lights, group: %d, WiFiBox:\n\t%s,\nobserver: %s]",
+				group, wifiBox.toString(), observer.toString());
 	}
 }

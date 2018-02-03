@@ -115,6 +115,21 @@ public class MilightColor {
 	}
 
 	/**
+	 * Set a new hue value and let the brightness and saturation values
+	 * untouched.
+	 * 
+	 * @param hue
+	 *            is the new hue value from 0 to 1
+	 */
+	public void setHue(float hue) {
+		// get hsb values
+		float[] hsb = getHSB();
+
+		// set new color
+		setColor(new Color(Color.HSBtoRGB(hue, hsb[1], hsb[2])));
+	}
+
+	/**
 	 * Extract the saturation value from the color the instance is representing.
 	 * 
 	 * @return the saturation value in a range between 0 and 1
@@ -125,6 +140,21 @@ public class MilightColor {
 	}
 
 	/**
+	 * Set a new saturation value and let the brightness and hue values
+	 * untouched.
+	 * 
+	 * @param saturation
+	 *            is the new saturation value from 0 to 1
+	 */
+	public void setSaturation(float saturation) {
+		// get hsb values
+		float[] hsb = getHSB();
+
+		// set new color
+		setColor(new Color(Color.HSBtoRGB(hsb[0], saturation, hsb[2])));
+	}
+
+	/**
 	 * Extract the brightness value from the color the instance is representing.
 	 * 
 	 * @return the brightness value in a range between 0 and 1
@@ -132,6 +162,21 @@ public class MilightColor {
 	 */
 	public float getBrightness() {
 		return getHSB()[2];
+	}
+
+	/**
+	 * Set a new brightness value and let the hue and saturation values
+	 * untouched.
+	 * 
+	 * @param brightness
+	 *            is the new brightness value from 0 to 1
+	 */
+	public void setBrightness(float brightness) {
+		// get hsb values
+		float[] hsb = getHSB();
+
+		// set new color
+		setColor(new Color(Color.HSBtoRGB(hsb[0], hsb[1], brightness)));
 	}
 
 	/**
@@ -146,10 +191,27 @@ public class MilightColor {
 	public int getMilightHue() {
 		// transform value by a linear change on the scale between 0 and 1
 		// setting 0 to 2/3, 1/3 to 1/3 and 2/3 to 0
-		float milightHue = (1f - (getHue() - 1 / 3f) + 1 / 3f) % 1f;
+		float milightHue = (5 / 3f - getHue()) % 1f;
 
 		// scale the value
 		return (int) (milightHue * MAX_COLOR);
+	}
+
+	/**
+	 * This function sets a new hue value given as it would be sent to the
+	 * WiFiBox. This function inverts the computation at
+	 * {@link MilightColor#getMilightHue()}.
+	 * 
+	 * @param milightHue
+	 *            is the hue value to set, given as it would be sent to the
+	 *            WiFiBox
+	 */
+	public void setMilightHue(int milightHue) {
+		// reverse transformation in getMilightHue
+		float hue = (5 / 3f - (float) milightHue / MAX_COLOR) % 1f;
+
+		// set hue
+		setHue(hue);
 	}
 
 	/**
@@ -164,6 +226,25 @@ public class MilightColor {
 		// scale the value
 		return MIN_BRIGHTNESS
 				+ (int) (getBrightness() * (MAX_BRIGHTNESS - MIN_BRIGHTNESS));
+	}
+
+	/**
+	 * This function sets a new brightness value for the color the instance is
+	 * representingThe value is given as it could be sent to the WiFiBox and
+	 * internally transferred to a float. This reverses the computation of
+	 * {@link MilightColor#getMilightBrightness()}.
+	 * 
+	 * @param milightBrightness
+	 *            is the brightness value to set, given as it would be sent to
+	 *            the WiFiBox
+	 */
+	public void setMilightBrightness(int milightBrightness) {
+		// reverse transformation in getMilightBrightness
+		float brightness = ((float) milightBrightness - MIN_BRIGHTNESS)
+				/ (MAX_BRIGHTNESS - MIN_BRIGHTNESS);
+
+		// set brightness
+		setBrightness(brightness);
 	}
 
 	/**
@@ -188,5 +269,71 @@ public class MilightColor {
 	 */
 	public boolean isColoredMode() {
 		return !isWhiteMode();
+	}
+
+	/**
+	 * This function checks whether two MilightColors represent the same color
+	 * by comparing their hsb values.
+	 * 
+	 * @param color
+	 *            the color to compare to
+	 * @return true if both MilightColors represent the same color, false
+	 *         otherwise
+	 */
+	public boolean equals(MilightColor color) {
+		// find variables
+		boolean equal = true;
+		float[] hsb = getHSB();
+		float[] hsb2 = color.getHSB();
+
+		// check all hsb values
+		for (int i = 0; i < hsb.length; i++) {
+			if (hsb[i] != hsb2[i]) {
+				equal = false;
+			}
+		}
+
+		return equal;
+	}
+
+	/**
+	 * This function finds colors between two MilightColors. By changing x from
+	 * 0 to 1 the color will turn to the given one smoothly.
+	 * 
+	 * @param target
+	 *            is the color to reach at x=1
+	 * @param x
+	 *            is the influence of the colors (x=0 returns this MilightColor,
+	 *            x=1 returns target)
+	 * @return the newly created MilightColor between the given ones
+	 */
+	public MilightColor getTransition(MilightColor target, float x) {
+		// find variables
+		float[] hsb = getHSB();
+		float[] hsbTarget = target.getHSB();
+
+		// make hue value "go the short way" if the values are close to 0 and 1
+		if (hsb[0] - hsbTarget[0] > 0.5) {
+			hsbTarget[0] += 1;
+		}
+		if (hsbTarget[0] - hsb[0] > 0.5) {
+			hsb[0] += 1;
+		}
+
+		// construct new color
+		return new MilightColor(
+				Color.getHSBColor((hsb[0] * (1 - x) + hsbTarget[0] * x) % 1,
+						hsb[1] * (1 - x) + hsbTarget[1] * x, hsb[2] * (1 - x)
+								+ hsbTarget[2] * x));
+	}
+
+	/**
+	 * This function describes the objet as a string. Use this for debugging.
+	 * 
+	 * @returns a string description of the instance
+	 */
+	public String toString() {
+		return String.format("[MilightColor, hue: %f, brightness: %f, saturation: %f]",
+				getHue(), getBrightness(), getSaturation());
 	}
 }

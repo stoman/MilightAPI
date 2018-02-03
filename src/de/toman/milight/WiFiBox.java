@@ -6,6 +6,20 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashSet;
+import java.util.Set;
+
+import de.toman.milight.events.ChangeBrightnessEvent;
+import de.toman.milight.events.ChangeColorEvent;
+import de.toman.milight.events.ColoredModeEvent;
+import de.toman.milight.events.DiscoModeEvent;
+import de.toman.milight.events.DiscoModeFasterEvent;
+import de.toman.milight.events.DiscoModeSlowerEvent;
+import de.toman.milight.events.LightEvent;
+import de.toman.milight.events.LightListener;
+import de.toman.milight.events.SwitchOffEvent;
+import de.toman.milight.events.SwitchOnEvent;
+import de.toman.milight.events.WhiteModeEvent;
 
 /**
  * This class represents a MiLight WiFi box and is able to send commands to a
@@ -23,6 +37,25 @@ public class WiFiBox {
 	 * The port of the WiFi box
 	 */
 	private int port;
+
+	/**
+	 * The set of all listeners listening for all groups of lights connected to
+	 * this WiFiBox.
+	 */
+	private Set<LightListener>[] lightListeners;
+
+	/**
+	 * The number of the currently active group
+	 */
+	private int activeGroup;
+
+	/**
+	 * An array containing references to Lights instances for all groups of
+	 * lights connected to this WiFiBox. They are not created on the fly to
+	 * avoid creating duplicate instances. Entry 0 corresponds to group 1 and so
+	 * on.
+	 */
+	private Lights[] lights;
 
 	/**
 	 * The default port for unconfigured boxes.
@@ -44,18 +77,22 @@ public class WiFiBox {
 	 * The command code for "GROUP 1 ALL OFF".
 	 */
 	public static final int COMMAND_GROUP_1_OFF = 0x46;
+
 	/**
 	 * The command code for "GROUP 2 ALL OFF".
 	 */
 	public static final int COMMAND_GROUP_2_OFF = 0x48;
+
 	/**
 	 * The command code for "GROUP 3 ALL OFF".
 	 */
 	public static final int COMMAND_GROUP_3_OFF = 0x4A;
+
 	/**
 	 * The command code for "GROUP 4 ALL OFF".
 	 */
 	public static final int COMMAND_GROUP_4_OFF = 0x4C;
+
 	/**
 	 * The command code for "RGBW COLOR LED ALL ON".
 	 */
@@ -145,10 +182,26 @@ public class WiFiBox {
 	 * @param port
 	 *            is the port of the WiFi box (omit this if unsure)
 	 */
+	@SuppressWarnings("unchecked")
 	public WiFiBox(InetAddress address, int port) {
+		// super call
 		super();
+
+		// save attributes
 		this.address = address;
 		this.port = port;
+
+		// create listener sets
+		lightListeners = new HashSet[4];
+		for (int i = 0; i < 4; i++) {
+			lightListeners[i] = new HashSet<LightListener>();
+		}
+
+		// create lights
+		lights = new Lights[4];
+		for (int group = 1; group <= 4; group++) {
+			lights[group - 1] = new Lights(this, group);
+		}
 	}
 
 	/**
@@ -212,7 +265,7 @@ public class WiFiBox {
 		}
 
 		// create new instance
-		return new Lights(this, group);
+		return lights[group - 1];
 	}
 
 	/**
@@ -227,16 +280,41 @@ public class WiFiBox {
 	 *             if the message could not be sent
 	 */
 	private void sendMessage(byte[] messages) throws IOException {
+		// check arguments
 		if (messages.length != 3) {
 			throw new IllegalArgumentException(
 					"The message to send should consist of exactly 3 bytes.");
 		}
 
+		// notify listeners
+		notifyLightListeners(messages);
+
+		// send message
 		DatagramSocket socket = new DatagramSocket();
 		DatagramPacket packet = new DatagramPacket(messages, messages.length,
 				address, port);
 		socket.send(packet);
 		socket.close();
+
+		// adjust currently active group of lights
+		switch (messages[0]) {
+		case COMMAND_GROUP_1_ON:
+		case COMMAND_GROUP_1_OFF:
+			activeGroup = 1;
+			break;
+		case COMMAND_GROUP_2_ON:
+		case COMMAND_GROUP_2_OFF:
+			activeGroup = 2;
+			break;
+		case COMMAND_GROUP_3_ON:
+		case COMMAND_GROUP_3_OFF:
+			activeGroup = 3;
+			break;
+		case COMMAND_GROUP_4_ON:
+		case COMMAND_GROUP_4_OFF:
+			activeGroup = 4;
+			break;
+		}
 	}
 
 	/**
@@ -559,7 +637,7 @@ public class WiFiBox {
 
 	/**
 	 * Trigger the disco mode for the active group of lights (the last one that
-	 * was switched on).
+	 * was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @throws IOException
 	 *             if the message could not be sent
@@ -596,7 +674,7 @@ public class WiFiBox {
 
 	/**
 	 * Increase the disco mode's speed for the active group of lights (the last
-	 * one that was switched on).
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @throws IOException
 	 *             if the message could not be sent
@@ -607,7 +685,7 @@ public class WiFiBox {
 
 	/**
 	 * Decrease the disco mode's speed for the active group of lights (the last
-	 * one that was switched on).
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @throws IOException
 	 *             if the message could not be sent
@@ -618,7 +696,7 @@ public class WiFiBox {
 
 	/**
 	 * Set the brightness value for the currently active group of lights (the
-	 * last one that was switched on).
+	 * last one that was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @param value
 	 *            is the brightness value to set (between
@@ -681,7 +759,7 @@ public class WiFiBox {
 
 	/**
 	 * Set the color value for the currently active group of lights (the last
-	 * one that was switched on).
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @param value
 	 *            is the color value to set (between MilightColor.MIN_COLOR and
@@ -699,7 +777,7 @@ public class WiFiBox {
 
 	/**
 	 * Set the color value for the currently active group of lights (the last
-	 * one that was switched on).
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @param color
 	 *            is the color to set
@@ -723,8 +801,8 @@ public class WiFiBox {
 
 	/**
 	 * Set the color value for the currently active group of lights (the last
-	 * one that was switched on). Colors with low saturation will be displayed
-	 * in white mode for a better result.
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}). Colors
+	 * with low saturation will be displayed in white mode for a better result.
 	 * 
 	 * @param color
 	 *            is the color to set
@@ -737,7 +815,7 @@ public class WiFiBox {
 
 	/**
 	 * Set the color value for the currently active group of lights (the last
-	 * one that was switched on).
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}).
 	 * 
 	 * @param color
 	 *            is the color to set
@@ -754,8 +832,8 @@ public class WiFiBox {
 
 	/**
 	 * Set the color value for the currently active group of lights (the last
-	 * one that was switched on). Colors with low saturation will be displayed
-	 * in white mode for a better result.
+	 * one that was switched on, see {@link WiFiBox#getActiveGroup()}). Colors
+	 * with low saturation will be displayed in white mode for a better result.
 	 * 
 	 * @param color
 	 *            is the color to set
@@ -881,8 +959,9 @@ public class WiFiBox {
 
 	/**
 	 * Set the color and brightness values for the currently active group of
-	 * lights (the last one that was switched on). Both values are extracted
-	 * from the color given to the function by transforming it to an HSB color.
+	 * lights (the last one that was switched on, see
+	 * {@link WiFiBox#getActiveGroup()}). Both values are extracted from the
+	 * color given to the function by transforming it to an HSB color.
 	 * 
 	 * @param color
 	 *            is the color to extract hue and brightness from
@@ -904,8 +983,9 @@ public class WiFiBox {
 
 	/**
 	 * Set the color and brightness values for the currently active group of
-	 * lights (the last one that was switched on). Both values are extracted
-	 * from the color given to the function by transforming it to an HSB color.
+	 * lights (the last one that was switched on, see
+	 * {@link WiFiBox#getActiveGroup()}). Both values are extracted from the
+	 * color given to the function by transforming it to an HSB color.
 	 * 
 	 * @param color
 	 *            is the color to extract hue and brightness from
@@ -1008,5 +1088,192 @@ public class WiFiBox {
 	 */
 	public void colorAndBrightness(int group, Color color) {
 		colorAndBrightness(group, new MilightColor(color));
+	}
+
+	/**
+	 * Use this function to add a new listener one group of lights connected to
+	 * the WiFiBox. Listeners will be notified when the group of lights is
+	 * switched on or off, color or brightness change, white or disco mode is
+	 * activated or disco mode is set faster or slower.
+	 * 
+	 * @param group
+	 *            is the number of the group to add the listener to
+	 * @param listener
+	 *            is the listener to add
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void addLightListener(int group, LightListener listener) {
+		// check group number
+		if (1 > group || group > 4) {
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+
+		// add listener
+		lightListeners[group - 1].add(listener);
+	}
+
+	/**
+	 * This function removes a listener from this WiFiBox which was added before
+	 * by {@link WiFiBox#addLightListener(int, LightListener)}.
+	 * 
+	 * @param group
+	 *            is the number of the group to remove the listener from
+	 * @param listener
+	 *            is the listener to remove
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	public void removeLightListener(int group, LightListener listener) {
+		// check group number
+		if (1 > group || group > 4) {
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+
+		// remove listener
+		lightListeners[group - 1].remove(listener);
+	}
+
+	/**
+	 * This function sends a LightEvent to all listeners listening on a certain
+	 * group of lights.
+	 * 
+	 * @param group
+	 *            is the number of the group to notify
+	 * @param event
+	 *            is the LightEvent to send to all listeners
+	 * @throws IllegalArgumentException
+	 *             if group is not between 1 and 4
+	 */
+	private void notifyLightListeners(int group, LightEvent event) {
+		// check group number
+		if (1 > group || group > 4) {
+			throw new IllegalArgumentException(
+					"The group number must be between 1 and 4");
+		}
+
+		// notify listeners
+		for (LightListener listener : lightListeners[group - 1]) {
+			listener.lightsChanged(event);
+		}
+	}
+
+	/**
+	 * This function sends a LightEvent to all listeners listening on a certain
+	 * group of lights. The event's type and the group of lights receiving the
+	 * message is obtained from the raw message sent to the WiFiBox.
+	 * 
+	 * @param message
+	 *            is the raw message sent to the WiFiBox
+	 */
+	private void notifyLightListeners(byte[] message) {
+		switch ((int) message[0]) {
+		// switch off commands
+		case COMMAND_ALL_OFF:
+			for (int group = 1; group <= 4; group++) {
+				notifyLightListeners(group,
+						new SwitchOffEvent(getLights(group)));
+			}
+			break;
+		case COMMAND_GROUP_1_OFF:
+			notifyLightListeners(1, new SwitchOffEvent(getLights(1)));
+			break;
+		case COMMAND_GROUP_2_OFF:
+			notifyLightListeners(2, new SwitchOffEvent(getLights(2)));
+			break;
+		case COMMAND_GROUP_3_OFF:
+			notifyLightListeners(3, new SwitchOffEvent(getLights(3)));
+			break;
+		case COMMAND_GROUP_4_OFF:
+			notifyLightListeners(4, new SwitchOffEvent(getLights(4)));
+			break;
+		// switch on commands
+		case COMMAND_ALL_ON:
+			for (int group = 1; group <= 4; group++) {
+				notifyLightListeners(group, new SwitchOnEvent(getLights(group)));
+			}
+			break;
+		case COMMAND_GROUP_1_ON:
+			notifyLightListeners(1, new SwitchOnEvent(getLights(1)));
+			break;
+		case COMMAND_GROUP_2_ON:
+			notifyLightListeners(2, new SwitchOnEvent(getLights(2)));
+			break;
+		case COMMAND_GROUP_3_ON:
+			notifyLightListeners(3, new SwitchOnEvent(getLights(3)));
+			break;
+		case COMMAND_GROUP_4_ON:
+			notifyLightListeners(4, new SwitchOnEvent(getLights(4)));
+			break;
+		// white mode commands
+		case COMMAND_ALL_WHITE:
+			for (int group = 1; group <= 4; group++) {
+				notifyLightListeners(group,
+						new WhiteModeEvent(getLights(group)));
+			}
+			break;
+		case COMMAND_GROUP_1_WHITE:
+			notifyLightListeners(1, new WhiteModeEvent(getLights(1)));
+			break;
+		case COMMAND_GROUP_2_WHITE:
+			notifyLightListeners(2, new WhiteModeEvent(getLights(2)));
+			break;
+		case COMMAND_GROUP_3_WHITE:
+			notifyLightListeners(3, new WhiteModeEvent(getLights(3)));
+			break;
+		case COMMAND_GROUP_4_WHITE:
+			notifyLightListeners(4, new WhiteModeEvent(getLights(4)));
+			break;
+		// disco mode commands
+		case COMMAND_DISCO:
+			notifyLightListeners(getActiveGroup(), new DiscoModeEvent(
+					getLights(getActiveGroup())));
+			break;
+		case COMMAND_DISCO_FASTER:
+			notifyLightListeners(getActiveGroup(), new DiscoModeFasterEvent(
+					getLights(getActiveGroup())));
+			break;
+		case COMMAND_DISCO_SLOWER:
+			notifyLightListeners(getActiveGroup(), new DiscoModeSlowerEvent(
+					getLights(getActiveGroup())));
+			break;
+		// change color commands
+		case COMMAND_COLOR:
+			MilightColor color = new MilightColor(Color.WHITE);
+			color.setMilightHue(message[1]);
+			notifyLightListeners(getActiveGroup(), new ColoredModeEvent(
+					getLights(getActiveGroup())));
+			notifyLightListeners(getActiveGroup(), new ChangeColorEvent(
+					getLights(getActiveGroup()), color));
+			break;
+		// change brightness commands
+		case COMMAND_BRIGHTNESS:
+			MilightColor color2 = new MilightColor(Color.WHITE);
+			color2.setMilightBrightness(message[1]);
+			notifyLightListeners(getActiveGroup(), new ChangeBrightnessEvent(
+					getLights(getActiveGroup()), color2.getBrightness()));
+			break;
+		}
+	}
+
+	/**
+	 * This function returns the number of the currently active group of lights.
+	 * 
+	 * @return the number of the currently active group of lights
+	 */
+	public int getActiveGroup() {
+		return activeGroup;
+	}
+
+	/**
+	 * This function describes the objet as a string. Use this for debugging.
+	 * 
+	 * @returns a string description of the instance
+	 */
+	public String toString() {
+		return String.format("[WiFiBox, address: %s, port: %d, activeGroup: %d]",
+				address.toString(), port, activeGroup);
 	}
 }
