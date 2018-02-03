@@ -45,6 +45,16 @@ public class MusicVisualizer implements Runnable {
 	}
 
 	/**
+	 * This constructor creates a new visualizer.
+	 * 
+	 * @param lights
+	 *            the group of lights to be controlled
+	 */
+	public MusicVisualizer(Lights lights) {
+		this(lights, getDefaultLine());
+	}
+
+	/**
 	 * This function returns the group of lights controlled by this visualizer.
 	 * 
 	 * @return the group of lights controlled by this visualizer
@@ -117,7 +127,7 @@ public class MusicVisualizer implements Runnable {
 	 *            is the number of bytes to read
 	 * @return is the integer represented by the byte array
 	 */
-	public BigInteger convertByteArrayToInteger(byte[] data, int offset,
+	private BigInteger convertByteArrayToInteger(byte[] data, int offset,
 			int length) {
 		// create variables
 		BigInteger ret = BigInteger.ZERO;
@@ -146,7 +156,7 @@ public class MusicVisualizer implements Runnable {
 	 *            is the array of values to be converted
 	 * @return is the integer represented by the byte array
 	 */
-	public BigInteger convertByteArrayToInteger(byte[] data) {
+	private BigInteger convertByteArrayToInteger(byte[] data) {
 		return convertByteArrayToInteger(data, 0, data.length);
 	}
 

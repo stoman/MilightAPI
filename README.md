@@ -87,10 +87,10 @@ created. The source to read the music from needs to be available as a
 The function
 [`MusicVisualizer.getDefaultLine()`](https://stoman.github.io/MilightAPI/de/toman/milight/MusicVisualizer.html#getDefaultLine--)
 is available to find the most common data lines. The visualizer can be
-started like this:
+started like this using the default line:
 
 ```
-MusicVisualizer vis = new MusicVisualizer(groupB, MusicVisualizer.getDefaultLine());
+MusicVisualizer vis = new MusicVisualizer(groupB);
 vis.start();
 ```
 
